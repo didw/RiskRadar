@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # Development settings
     use_mock_kafka: bool = False  # 실제 Kafka 사용
     use_simple_tokenizer: bool = False
-    use_mock_ner: bool = True  # Use mock NER model by default
+    use_mock_ner: bool = False  # Use Enhanced Rule NER model
     mock_data_path: str = "mock-data/raw-news.json"
     
     # NER model settings

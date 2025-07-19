@@ -11,9 +11,14 @@ ML Service는 RiskRadar의 자연어 처리 및 머신러닝 추론을 담당하
 ml-service/
 ├── src/
 │   ├── models/             # ML 모델
-│   │   ├── ner/           # 개체명 인식
-│   │   │   ├── kobert_ner.py
-│   │   │   └── configs/
+│   │   ├── ner/           # 개체명 인식 모델
+│   │   │   ├── enhanced_rule_ner.py    # 향상된 규칙 기반 NER
+│   │   │   ├── koelectra_ner.py        # KoELECTRA NER 모델
+│   │   │   ├── postprocessor.py        # 후처리 모듈
+│   │   │   ├── entity_linker.py        # 엔티티 연결
+│   │   │   ├── company_matcher.py      # 회사명 매칭
+│   │   │   ├── cache_manager.py        # 캐시 관리
+│   │   │   └── knowledge_base.py       # 지식 베이스
 │   │   ├── sentiment/     # 감정 분석
 │   │   │   └── sentiment_analyzer.py
 │   │   └── risk/          # 리스크 분류
@@ -23,23 +28,26 @@ ml-service/
 │   │   ├── normalizer.py  # 텍스트 정규화
 │   │   └── pipeline.py    # 처리 파이프라인
 │   ├── kafka/             # Kafka 연동
-│   │   ├── consumer.py
-│   │   ├── producer.py
-│   │   └── schemas.py
+│   │   ├── consumer.py    # 실시간 메시지 소비
+│   │   ├── producer.py    # 처리 결과 발행
+│   │   └── __init__.py
 │   ├── api/              # REST API
+│   │   ├── __init__.py
 │   │   ├── routes.py
 │   │   └── models.py
-│   └── config.py         # 설정
-├── models/               # 학습된 모델 파일
-│   ├── kobert-ner/
-│   └── sentiment/
+│   ├── config.py         # 설정 관리
+│   └── main.py           # 서비스 진입점
 ├── tests/                # 테스트
-├── notebooks/            # 실험 노트북
-├── requirements.txt
-├── Dockerfile
-├── README.md
+│   ├── unit/             # 단위 테스트
+│   ├── integration/      # 통합 테스트
+│   └── test_data/        # 테스트 데이터
+├── mock-data/            # 개발용 Mock 데이터
+├── requirements.txt      # Python 의존성
+├── .env                  # 환경 변수
+├── Dockerfile           # 컨테이너 이미지
+├── README.md            # 프로젝트 정보
 ├── CLAUDE.md            # 현재 파일
-└── CHANGELOG.md
+└── CHANGELOG.md         # 변경 이력
 ```
 
 ## 💻 개발 환경 설정
@@ -302,20 +310,48 @@ docker build -f Dockerfile.gpu -t riskradar/ml-service:latest-gpu .
 
 ### 환경 변수
 ```env
-# Kafka
-KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-KAFKA_CONSUMER_GROUP=ml-service
+# Development mode
+USE_MOCK_KAFKA=false
+USE_SIMPLE_TOKENIZER=true
 
-# Model
+# API settings
+API_HOST=0.0.0.0
+API_PORT=8082
+
+# Kafka settings (local development)
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+KAFKA_CONSUMER_GROUP=ml-service
+KAFKA_INPUT_TOPIC=raw-news
+KAFKA_OUTPUT_TOPIC=enriched-news
+
+# Model settings
 MODEL_PATH=/app/models
 MODEL_VERSION=v1.0.0
+TOKENIZER_BACKEND=komoran
 
-# GPU
-CUDA_VISIBLE_DEVICES=0
+# Processing settings
+BATCH_SIZE=32
+MAX_PROCESSING_TIME_MS=100
+ENABLE_GPU=false
 
-# API
-API_PORT=8002
-API_WORKERS=4
+# Logging
+LOG_LEVEL=INFO
+```
+
+### 실제 Kafka 통합 (Production Mode)
+```bash
+# Kafka 서비스 연결 확인
+docker exec riskradar-kafka kafka-topics --bootstrap-server localhost:9092 --list
+
+# 메시지 생산 테스트
+echo '{"id": "test-001", "title": "테스트 뉴스", "content": "삼성전자가 새로운 투자를 발표했습니다."}' | \
+  docker exec -i riskradar-kafka kafka-console-producer \
+  --bootstrap-server localhost:9092 --topic raw-news
+
+# 처리된 메시지 확인
+docker exec riskradar-kafka kafka-console-consumer \
+  --bootstrap-server localhost:9092 --topic enriched-news \
+  --from-beginning --max-messages 1 | jq '.nlp.entities'
 ```
 
 ## 📊 모니터링

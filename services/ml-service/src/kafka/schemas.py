@@ -41,12 +41,22 @@ class Keyword(BaseModel):
     score: float = Field(..., description="TF-IDF or importance score")
 
 
+class RiskAnalysis(BaseModel):
+    """Enhanced risk analysis result"""
+    overall_risk_score: float = Field(0.0, description="Overall risk score (0-1)")
+    risk_level: str = Field("MINIMAL", description="Risk level (MINIMAL, LOW, MEDIUM, HIGH, CRITICAL)")
+    category_scores: Dict[str, float] = Field(default_factory=dict, description="Category-wise risk scores")
+    detected_events: List[Dict[str, Any]] = Field(default_factory=list, description="Detected risk events")
+    risk_summary: str = Field("", description="Risk summary description")
+
+
 class NLPResult(BaseModel):
     """Complete NLP processing result"""
     entities: List[Entity] = Field(default_factory=list)
     sentiment: Sentiment
     keywords: List[Keyword] = Field(default_factory=list)
     risk_score: float = Field(0.0, description="Risk score (0-1)")
+    risk_analysis: Optional[RiskAnalysis] = Field(None, description="Enhanced risk analysis")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 
 

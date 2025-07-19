@@ -9,10 +9,12 @@ from dataclasses import dataclass
 
 from .tokenizer import KoreanTokenizer, SimpleTokenizer
 from .normalizer import TextNormalizer
-from ..kafka.schemas import NLPResult, Entity, Sentiment, Keyword
+from ..kafka.schemas import NLPResult, Entity, Sentiment, Keyword, RiskAnalysis
 from ..models.ner import MockNERModel, KLUEBERTNERModel
 from ..models.ner.enhanced_rule_ner import EnhancedRuleBasedNER
 from ..models.ner.koelectra_ner import KoELECTRANER
+from ..models.sentiment.enhanced_sentiment import EnhancedSentimentAnalyzer
+from ..models.risk.risk_analyzer import EnhancedRiskAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,12 @@ class ProcessingConfig:
     use_koelectra_ner: bool = False  # Use KoELECTRA NER model
     ner_model_name: str = "enhanced_rule_ner"
     ner_confidence_threshold: float = 0.8
+    
+    # Sentiment analysis settings
+    use_enhanced_sentiment: bool = True  # Use enhanced sentiment analyzer
+    
+    # Risk analysis settings
+    enable_risk_analysis: bool = True  # Enable comprehensive risk analysis
 
 
 class NLPPipeline:
@@ -67,8 +75,19 @@ class NLPPipeline:
             self.ner_model = KLUEBERTNERModel()
             logger.info("Using KLUE-BERT NER model (local)")
             
-        # Sentiment model placeholder
-        self.sentiment_model = None
+        # Initialize sentiment analyzer
+        if self.config.use_enhanced_sentiment:
+            self.sentiment_analyzer = EnhancedSentimentAnalyzer()
+            logger.info("Using Enhanced Sentiment Analyzer")
+        else:
+            self.sentiment_analyzer = None
+            
+        # Initialize risk analyzer
+        if self.config.enable_risk_analysis:
+            self.risk_analyzer = EnhancedRiskAnalyzer()
+            logger.info("Using Enhanced Risk Analyzer")
+        else:
+            self.risk_analyzer = None
         
         logger.info("NLP Pipeline initialized")
         
@@ -98,27 +117,50 @@ class NLPPipeline:
             if self.config.enable_ner:
                 entities = await self._extract_entities(normalized_text, pos_tags)
                 
-            # 4. Sentiment analysis (mock for now)
+            # 4. Sentiment analysis (enhanced)
             sentiment = Sentiment(label="neutral", score=0.5, probabilities={})
             if self.config.enable_sentiment:
-                sentiment = await self._analyze_sentiment(normalized_text, tokens)
+                sentiment = await self._analyze_sentiment(normalized_text, entities)
                 
             # 5. Keyword extraction
             keywords = []
             if self.config.enable_keywords:
                 keywords = await self._extract_keywords(normalized_text, pos_tags)
                 
-            # 6. Risk score calculation
-            risk_score = self._calculate_risk_score(entities, sentiment, keywords)
+            # 6. Enhanced risk analysis
+            risk_score = 0.0
+            risk_analysis_result = None
+            if self.config.enable_risk_analysis and self.risk_analyzer:
+                risk_analysis_result = self.risk_analyzer.analyze_risk(
+                    normalized_text, 
+                    entities, 
+                    {'label': sentiment.label, 'score': sentiment.score}
+                )
+                risk_score = risk_analysis_result.get('overall_risk_score', 0.0)
+            else:
+                # Fallback to simple risk calculation
+                risk_score = self._calculate_simple_risk_score(entities, sentiment, keywords)
             
             # Calculate processing time
             processing_time_ms = (time.time() - start_time) * 1000
+            
+            # Prepare enhanced risk analysis if available
+            enhanced_risk_analysis = None
+            if risk_analysis_result:
+                enhanced_risk_analysis = RiskAnalysis(
+                    overall_risk_score=risk_analysis_result.get('overall_risk_score', 0.0),
+                    risk_level=risk_analysis_result.get('risk_level', 'MINIMAL'),
+                    category_scores=risk_analysis_result.get('category_scores', {}),
+                    detected_events=risk_analysis_result.get('detected_events', []),
+                    risk_summary=risk_analysis_result.get('risk_summary', '')
+                )
             
             return NLPResult(
                 entities=entities,
                 sentiment=sentiment,
                 keywords=keywords,
                 risk_score=risk_score,
+                risk_analysis=enhanced_risk_analysis,
                 processing_time_ms=processing_time_ms
             )
             
@@ -165,16 +207,54 @@ class NLPPipeline:
             # Fallback to empty list
             return []
         
-    async def _analyze_sentiment(self, text: str, tokens: List[str]) -> Sentiment:
+    async def _analyze_sentiment(self, text: str, entities: List[Entity]) -> Sentiment:
         """
-        Analyze sentiment (mock implementation for Week 1)
+        Enhanced sentiment analysis using the improved analyzer
         """
-        # Simple keyword-based sentiment for testing
+        if self.sentiment_analyzer:
+            return self.sentiment_analyzer.analyze_sentiment(text, entities)
+        else:
+            # Fallback to simple keyword-based sentiment analysis
+            return self._simple_sentiment_analysis(text)
+        
+    async def _extract_keywords(self, text: str, pos_tags: List[tuple]) -> List[Keyword]:
+        """
+        Extract keywords using POS tags
+        """
+        # Extract nouns as keywords
+        nouns = self.tokenizer.nouns(text)
+        
+        # Filter by length
+        keywords = [
+            noun for noun in nouns 
+            if len(noun) >= self.config.min_keyword_length
+        ]
+        
+        # Simple frequency-based scoring
+        keyword_scores = {}
+        for keyword in keywords:
+            keyword_scores[keyword] = keyword_scores.get(keyword, 0) + 1
+            
+        # Convert to Keyword objects
+        keyword_objects = [
+            Keyword(text=kw, score=score/len(keywords))
+            for kw, score in keyword_scores.items()
+        ]
+        
+        # Sort by score and return top N
+        keyword_objects.sort(key=lambda x: x.score, reverse=True)
+        return keyword_objects[:self.config.max_keywords]
+        
+    def _simple_sentiment_analysis(self, text: str) -> Sentiment:
+        """
+        Simple fallback sentiment analysis
+        """
         positive_words = ['증가', '상승', '호조', '성장', '개선', '긍정', '성공']
         negative_words = ['감소', '하락', '부진', '손실', '우려', '부정', '실패', '연체', '급락']
         
-        positive_count = sum(1 for token in tokens if token in positive_words)
-        negative_count = sum(1 for token in tokens if token in negative_words)
+        # Simple word counting
+        positive_count = sum(1 for word in positive_words if word in text)
+        negative_count = sum(1 for word in negative_words if word in text)
         
         total = positive_count + negative_count
         if total == 0:
@@ -205,36 +285,8 @@ class NLPPipeline:
                 "negative": 1 - positive_ratio
             }
         )
-        
-    async def _extract_keywords(self, text: str, pos_tags: List[tuple]) -> List[Keyword]:
-        """
-        Extract keywords using POS tags
-        """
-        # Extract nouns as keywords
-        nouns = self.tokenizer.nouns(text)
-        
-        # Filter by length
-        keywords = [
-            noun for noun in nouns 
-            if len(noun) >= self.config.min_keyword_length
-        ]
-        
-        # Simple frequency-based scoring
-        keyword_scores = {}
-        for keyword in keywords:
-            keyword_scores[keyword] = keyword_scores.get(keyword, 0) + 1
-            
-        # Convert to Keyword objects
-        keyword_objects = [
-            Keyword(text=kw, score=score/len(keywords))
-            for kw, score in keyword_scores.items()
-        ]
-        
-        # Sort by score and return top N
-        keyword_objects.sort(key=lambda x: x.score, reverse=True)
-        return keyword_objects[:self.config.max_keywords]
-        
-    def _calculate_risk_score(self, entities: List[Entity], 
+    
+    def _calculate_simple_risk_score(self, entities: List[Entity], 
                             sentiment: Sentiment, 
                             keywords: List[Keyword]) -> float:
         """

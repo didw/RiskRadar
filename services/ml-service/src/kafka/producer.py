@@ -23,16 +23,19 @@ class MLProducer:
     def connect(self):
         """Initialize Kafka producer connection"""
         try:
+            logger.info(f"Attempting to connect to Kafka producer at {self.bootstrap_servers}")
             self.producer = KafkaProducer(
                 bootstrap_servers=self.bootstrap_servers,
                 value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode('utf-8'),
                 acks='all',  # Wait for all replicas
                 retries=3,
-                max_in_flight_requests_per_connection=1
+                max_in_flight_requests_per_connection=1,
+                request_timeout_ms=40000,
+                connections_max_idle_ms=540000
             )
-            logger.info(f"Connected to Kafka broker at {self.bootstrap_servers}")
+            logger.info(f"Connected to Kafka producer at {self.bootstrap_servers}")
         except KafkaError as e:
-            logger.error(f"Failed to connect to Kafka: {e}")
+            logger.error(f"Failed to connect to Kafka producer: {e}")
             raise
             
     async def send_enriched(self, enriched_news: Dict[str, Any]):

@@ -29,6 +29,7 @@ class MLConsumer:
     def connect(self):
         """Initialize Kafka consumer connection"""
         try:
+            logger.info(f"Attempting to connect to Kafka at {self.bootstrap_servers}")
             self.consumer = KafkaConsumer(
                 self.topic,
                 bootstrap_servers=self.bootstrap_servers,
@@ -37,7 +38,9 @@ class MLConsumer:
                 auto_offset_reset='earliest',
                 enable_auto_commit=True,
                 session_timeout_ms=30000,
-                heartbeat_interval_ms=10000
+                heartbeat_interval_ms=10000,
+                request_timeout_ms=40000,
+                connections_max_idle_ms=540000
             )
             logger.info(f"Connected to Kafka broker at {self.bootstrap_servers}")
             logger.info(f"Subscribed to topic: {self.topic}")
@@ -65,9 +68,33 @@ class MLConsumer:
             # Process through NLP pipeline if available
             if self.pipeline:
                 nlp_result = await self.pipeline.process(content)
+                # Convert NLPResult object to dictionary for JSON serialization
+                nlp_dict = {
+                    "entities": [
+                        {
+                            "text": entity.text,
+                            "type": entity.type,
+                            "start": entity.start,
+                            "end": entity.end,
+                            "confidence": entity.confidence
+                        } for entity in nlp_result.entities
+                    ],
+                    "sentiment": {
+                        "label": nlp_result.sentiment.label,
+                        "score": nlp_result.sentiment.score
+                    },
+                    "keywords": [
+                        {
+                            "text": keyword.text,
+                            "score": keyword.score
+                        } for keyword in nlp_result.keywords
+                    ],
+                    "risk_score": nlp_result.risk_score,
+                    "processing_time_ms": nlp_result.processing_time_ms
+                }
             else:
                 # Mock processing for now
-                nlp_result = {
+                nlp_dict = {
                     "entities": [],
                     "sentiment": {"label": "neutral", "score": 0.0},
                     "keywords": [],
@@ -77,7 +104,7 @@ class MLConsumer:
             # Create enriched news object
             enriched = {
                 "original": message,
-                "nlp": nlp_result,
+                "nlp": nlp_dict,
                 "processed_at": datetime.now().isoformat(),
                 "ml_service_version": "1.0.0"
             }
