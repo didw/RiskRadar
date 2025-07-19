@@ -17,6 +17,7 @@ const userTypeDefs = loadGraphQLFile('user.graphql');
 const newsTypeDefs = loadGraphQLFile('news.graphql');
 const subscriptionTypeDefs = loadGraphQLFile('subscription.graphql');
 const analyticsTypeDefs = loadGraphQLFile('analytics.graphql');
+const dailyReportTypeDefs = loadGraphQLFile('dailyReport.graphql');
 
 export const typeDefs = gql`
   ${baseTypeDefs}
@@ -26,4 +27,5 @@ export const typeDefs = gql`
   ${newsTypeDefs}
   ${subscriptionTypeDefs}
   ${analyticsTypeDefs}
+  ${dailyReportTypeDefs}
 `;

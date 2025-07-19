@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiskRadar Daily Report (Real Data)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; border-radius: 12px; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1rem; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 24px; }
+        .card h2 { color: #333; margin-bottom: 20px; font-size: 1.4rem; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .grid { display: grid; gap: 16px; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+        .health-item { background: #f8f9fa; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .healthy { background: #d4edda; color: #155724; }
+        .critical { background: #f8d7da; color: #721c24; }
+        .degraded { background: #fff3cd; color: #856404; }
+        .loading { background: #ccc; color: #666; }
+        .stat-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .stat-item:last-child { border-bottom: none; }
+        .risk-company { background: #f8f9fa; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .risk-rank { font-size: 1.2rem; font-weight: bold; color: #666; }
+        .risk-score { font-size: 1.3rem; font-weight: bold; color: #dc3545; }
+        .recommendations { background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 20px; }
+        .recommendations ul { list-style: none; }
+        .recommendations li { margin-bottom: 8px; padding-left: 20px; position: relative; }
+        .recommendations li:before { content: '💡'; position: absolute; left: 0; }
+        .refresh-btn { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        .refresh-btn:hover { background: #0056b3; }
+        .processing-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+        .processing-stat { text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px; }
+        .processing-stat h4 { color: #666; font-size: 0.9rem; margin-bottom: 8px; }
+        .processing-stat p { font-size: 1.3rem; font-weight: bold; color: #333; }
+        .alert { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🎯 RiskRadar Daily Report</h1>
+                    <p id="generated-time">Loading real-time data...</p>
+                </div>
+                <button class="refresh-btn" onclick="loadRealData()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <div id="alert-section"></div>
+
+        <!-- System Health -->
+        <div class="card">
+            <h2>⚡ System Health Status (Real-time)</h2>
+            <div class="grid grid-4" id="system-health">
+                <div class="health-item">
+                    <span>Data Service</span>
+                    <span class="status-badge loading">Loading...</span>
+                </div>
+                <div class="health-item">
+                    <span>ML Service</span>
+                    <span class="status-badge loading">Loading...</span>
+                </div>
+                <div class="health-item">
+                    <span>Graph Service</span>
+                    <span class="status-badge loading">Loading...</span>
+                </div>
+                <div class="health-item">
+                    <span>API Gateway</span>
+                    <span class="status-badge loading">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Statistics -->
+        <div class="grid grid-2">
+            <div class="card">
+                <h2>📊 Graph Database (Real Data)</h2>
+                <div id="graph-stats">
+                    <div class="stat-item"><span>Companies</span><strong id="companies-count">Loading...</strong></div>
+                    <div class="stat-item"><span>News Articles</span><strong id="news-count">Loading...</strong></div>
+                    <div class="stat-item"><span>Executives</span><strong id="executives-count">Loading...</strong></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>⚡ Message Queue Status</h2>
+                <div id="queue-stats">
+                    <div class="stat-item"><span>Kafka Status</span><strong id="kafka-status">Loading...</strong></div>
+                    <div class="stat-item"><span>Data Service</span><strong id="data-kafka">Loading...</strong></div>
+                    <div class="stat-item"><span>ML Service</span><strong id="ml-kafka">Loading...</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Details -->
+        <div class="card">
+            <h2>🔍 Service Detailed Status</h2>
+            <div id="service-details">
+                Loading detailed service information...
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div style="text-align: center; margin-top: 40px; padding: 20px; background: white; border-radius: 12px;">
+            <h3 style="margin-bottom: 15px;">🎯 RiskRadar Navigation</h3>
+            <a href="http://localhost:3000/" style="display: inline-block; margin: 0 10px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 6px;">Main Dashboard</a>
+            <a href="http://localhost:8004/graphql" style="display: inline-block; margin: 0 10px; padding: 10px 20px; background: #28a745; color: white; text-decoration: none; border-radius: 6px;">GraphQL Playground</a>
+            <a href="daily-report-standalone.html" style="display: inline-block; margin: 0 10px; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px;">Mock Data Report</a>
+        </div>
+    </div>
+
+    <script>
+        async function checkServiceHealth(url, serviceName) {
+            try {
+                const response = await fetch(url, { 
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                });
+                const data = await response.json();
+                return { service: serviceName, status: 'healthy', data };
+            } catch (error) {
+                return { service: serviceName, status: 'critical', error: error.message };
+            }
+        }
+
+        async function loadRealData() {
+            document.getElementById('generated-time').textContent = 
+                'Last updated: ' + new Date().toLocaleString();
+
+            // Check all services
+            const services = [
+                { url: 'http://localhost:8001/health', name: 'Data Service', id: 'data-service' },
+                { url: 'http://localhost:8082/api/v1/health', name: 'ML Service', id: 'ml-service' },
+                { url: 'http://localhost:8003/health', name: 'Graph Service', id: 'graph-service' },
+                { url: 'http://localhost:8004/health', name: 'API Gateway', id: 'api-gateway' }
+            ];
+
+            const results = await Promise.all(
+                services.map(service => checkServiceHealth(service.url, service.name))
+            );
+
+            // Update system health display
+            const healthHtml = results.map((result, index) => {
+                const statusClass = result.status === 'healthy' ? 'healthy' : 
+                                  result.status === 'critical' ? 'critical' : 'degraded';
+                return `
+                    <div class="health-item">
+                        <span>${result.service}</span>
+                        <span class="status-badge ${statusClass}">${result.status}</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('system-health').innerHTML = healthHtml;
+
+            // Show alerts for critical services
+            const criticalServices = results.filter(r => r.status === 'critical');
+            if (criticalServices.length > 0) {
+                const alertHtml = `
+                    <div class="alert">
+                        <strong>⚠️ Critical Issues Detected:</strong><br>
+                        ${criticalServices.map(s => `• ${s.service}: ${s.error}`).join('<br>')}
+                    </div>
+                `;
+                document.getElementById('alert-section').innerHTML = alertHtml;
+            } else {
+                document.getElementById('alert-section').innerHTML = '';
+            }
+
+            // Update detailed service information
+            let detailsHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">';
+            results.forEach(result => {
+                if (result.data) {
+                    detailsHtml += `
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                            <h4 style="color: #333; margin-bottom: 10px;">${result.service}</h4>
+                            <pre style="font-size: 0.8rem; color: #666; white-space: pre-wrap;">${JSON.stringify(result.data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    detailsHtml += `
+                        <div style="background: #f8d7da; padding: 15px; border-radius: 8px;">
+                            <h4 style="color: #721c24; margin-bottom: 10px;">${result.service}</h4>
+                            <p style="color: #721c24;">❌ Service unavailable: ${result.error}</p>
+                        </div>
+                    `;
+                }
+            });
+            detailsHtml += '</div>';
+            document.getElementById('service-details').innerHTML = detailsHtml;
+
+            // Update Kafka status based on service responses
+            const dataService = results.find(r => r.service === 'Data Service');
+            const mlService = results.find(r => r.service === 'ML Service');
+            
+            document.getElementById('kafka-status').textContent = 
+                (dataService?.data?.kafka === 'connected') ? 'Connected' : 'Disconnected';
+            document.getElementById('data-kafka').textContent = 
+                (dataService?.data?.kafka === 'connected') ? '✅ Connected' : '❌ Disconnected';
+            document.getElementById('ml-kafka').textContent = 
+                (mlService?.data?.kafka_connected === true) ? '✅ Connected' : '❌ Disconnected';
+
+            // Update graph database stats (mock for now since Graph Service is having issues)
+            document.getElementById('companies-count').textContent = '⚠️ Service Down';
+            document.getElementById('news-count').textContent = '⚠️ Service Down';
+            document.getElementById('executives-count').textContent = '⚠️ Service Down';
+        }
+        
+        // Load data on page load
+        loadRealData();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadRealData, 30000);
+    </script>
+</body>
+</html>

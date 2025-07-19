@@ -1,0 +1,47 @@
+"""
+Daily Report Schema
+"""
+
+type SystemHealth {
+  dataService: String!
+  mlService: String!
+  graphService: String!
+  apiGateway: String!
+}
+
+type DataStatistics {
+  companies: Int!
+  newsArticles: Int!
+  executives: Int!
+  rawNewsMessages: Int!
+  enrichedNewsMessages: Int!
+}
+
+type TopRiskCompany {
+  rank: Int!
+  name: String!
+  riskScore: Float!
+  industry: String!
+}
+
+type ProcessingStats {
+  targetThroughput: String!
+  actualMessages: Int!
+  mlProcessingTarget: String!
+}
+
+type DailyReport {
+  generatedAt: String!
+  systemHealth: SystemHealth!
+  dataStatistics: DataStatistics!
+  topRiskCompanies: [TopRiskCompany!]!
+  processingStats: ProcessingStats!
+  recommendations: [String!]!
+}
+
+extend type Query {
+  """
+  Get the daily report with system status and statistics
+  """
+  dailyReport: DailyReport!
+}

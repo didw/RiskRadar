@@ -4,6 +4,7 @@ import { userResolvers } from './user.js';
 import { newsResolvers } from './news.js';
 import { subscriptionResolvers } from './subscription.js';
 import { analyticsResolvers } from './analytics.js';
+import { dailyReportResolvers } from './dailyReport.js';
 import { Loaders } from '../dataloaders/index.js';
 import { graphServiceClient } from '../../services/graph.client.js';
 import { mlServiceClient } from '../../services/ml.client.js';
@@ -38,4 +39,5 @@ export const resolvers = [
   subscriptionResolvers,
   newsResolvers,
   analyticsResolvers,
+  dailyReportResolvers,
 ];

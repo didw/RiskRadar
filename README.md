@@ -20,6 +20,7 @@ RiskRadar는 한국 상위 200대 기업의 CEO를 위한 AI 기반 리스크 �
 - ✅ **한국어 NLP 엔진** F1-Score 88.6% 달성
 - ✅ **실시간 리스크 모니터링** 시스템 가동
 - ✅ **GraphQL 통합 API** 및 WebSocket 실시간 업데이트
+- ✅ **Daily Report 시스템** 구축 (실시간 모니터링 대시보드)
 
 ### 핵심 가치
 - **실시간 리스크 모니터링**: 뉴스, 공시, SNS 등 다양한 소스에서 리스크 신호 포착
@@ -156,6 +157,8 @@ docker-compose -f docker-compose.prod.yml up -d
 # Web UI: http://localhost
 # API Gateway: http://localhost:8004/graphql
 # Monitoring: http://localhost:3001 (Grafana)
+# Daily Report (실시간): http://localhost:8080/daily-report-real-data.html
+# Daily Report (Demo): http://localhost:8080/daily-report-standalone.html
 ```
 
 ### 개발 가이드
@@ -265,6 +268,7 @@ Sprint 1 (Week 2-3): Core Features ✅
 Sprint 2 (Week 4): Integration & Optimization ✅
 ├── 성능 최적화 (49ms/article)
 ├── 통합 테스트 자동화 (7개)  
+├── Daily Report 시스템 구축
 ├── 문서화 완성
 └── 배포 준비 완료
 ```
@@ -280,6 +284,38 @@ Sprint 2 (Week 4): Integration & Optimization ✅
 - **모바일 앱**: PWA, 푸시 알림, 오프라인 지원
 - **AI 인사이트**: GPT 기반 자연어 요약, 의사결정 지원
 - **Enterprise 기능**: 멀티테넌트, RBAC, 감사 로그
+
+## 📊 Daily Report 시스템
+
+### 기능 개요
+CEO를 위한 실시간 시스템 모니터링 및 리스크 현황 대시보드
+
+### 주요 기능
+- **실시간 시스템 상태**: 5개 마이크로서비스 상태 모니터링
+- **데이터 통계**: Graph Database 및 Message Queue 현황
+- **위험 기업 순위**: Top 3 위험 기업 및 리스크 점수
+- **처리 통계**: 목표 vs 실제 성능 지표
+- **권장사항**: 시스템 상태 기반 동적 권장사항
+- **자동 새로고침**: 30초마다 실시간 데이터 업데이트
+
+### 접속 방법
+```bash
+# 실시간 데이터 기반 Daily Report
+http://localhost:8080/daily-report-real-data.html
+
+# Mock 데이터 기반 Demo Report
+http://localhost:8080/daily-report-standalone.html
+```
+
+### 자동화 설정
+```bash
+# Daily Report 자동 생성 (매일 오전 9시)
+chmod +x ./scripts/setup_daily_report_cron.sh
+./scripts/setup_daily_report_cron.sh
+
+# 수동 실행
+python ./scripts/generate_daily_report.py
+```
 
 ## 🛠️ 개발 워크플로우
 
