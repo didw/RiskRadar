@@ -18,6 +18,8 @@ import threading
 from queue import Queue, Empty
 import os
 
+from ..metrics import get_metrics_collector
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,6 +98,7 @@ class OptimizedKafkaProducer:
         self._message_queue = Queue()
         self._batch_thread = None
         self._running = False
+        self._metrics_collector = get_metrics_collector()
         self._initialize_producer()
     
     def _initialize_producer(self):
@@ -206,6 +209,9 @@ class OptimizedKafkaProducer:
                 # 콜백 등록
                 future.add_callback(self._on_send_success, message)
                 future.add_errback(self._on_send_error, message)
+                
+                # 메트릭 기록 (전송 시도)
+                self._metrics_collector.record_kafka_message(self.config.topic, True)
             
             # 배치 플러시
             self.producer.flush(timeout=10)
@@ -226,6 +232,10 @@ class OptimizedKafkaProducer:
             with self._lock:
                 self._stats["total_failed"] += len(batch)
                 self._stats["last_error"] = str(e)
+            
+            # 실패 메트릭 기록
+            for _ in batch:
+                self._metrics_collector.record_kafka_message(self.config.topic, False)
     
     def _on_send_success(self, message: NewsMessage, record_metadata):
         """전송 성공 콜백"""

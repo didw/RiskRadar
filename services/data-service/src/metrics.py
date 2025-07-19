@@ -10,9 +10,12 @@ import logging
 
 from prometheus_client import (
     Counter, Histogram, Gauge, Summary,
-    generate_latest, CONTENT_TYPE_LATEST,
+    generate_latest, CONTENT_TYPE_LATEST as PROMETHEUS_CONTENT_TYPE,
     CollectorRegistry, REGISTRY
 )
+
+# Export for use in routes
+CONTENT_TYPE_LATEST = PROMETHEUS_CONTENT_TYPE
 
 logger = logging.getLogger(__name__)
 

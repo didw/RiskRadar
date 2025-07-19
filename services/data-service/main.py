@@ -6,7 +6,7 @@ from kafka import KafkaProducer
 from datetime import datetime
 import logging
 
-from src.api.routes import router as api_router
+from src.api.routes import router as api_router, metrics_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,6 +41,8 @@ app = FastAPI(title="Data Service", version="0.3.0", lifespan=lifespan)
 
 # API 라우터 등록
 app.include_router(api_router)
+# Prometheus 메트릭 라우터 등록 (prefix 없이)
+app.include_router(metrics_router)
 
 @app.get("/health")
 async def health_check():

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Response
 from typing import Dict, Any, List
 import logging
 from datetime import datetime, timedelta
@@ -185,10 +185,15 @@ async def execute_crawling(sources: List[str], limit: int = 10):
                 
                 # 중복 제거 확인
                 from ..processors.deduplicator import get_deduplicator
+                from ..metrics import get_metrics_collector
+                
                 deduplicator = get_deduplicator()
+                metrics_collector = get_metrics_collector()
+                
                 dup_result = deduplicator.is_duplicate(normalized_article)
                 
                 if dup_result.is_duplicate:
+                    metrics_collector.record_article_processed(source, 'duplicate')
                     return {
                         'status': 'duplicate',
                         'reason': dup_result.reason,
@@ -200,6 +205,10 @@ async def execute_crawling(sources: List[str], limit: int = 10):
                 success = producer.send_message(kafka_message)
                 
                 if success:
+                    # 메트릭 업데이트
+                    metrics_collector.record_article_processed(source, 'processed')
+                    metrics_collector.record_kafka_message('raw-news', True)
+                    
                     # 통계 업데이트
                     crawler_stats[source]["items_collected"] += 1
                     collection_stats["total_items"] += 1
@@ -214,6 +223,7 @@ async def execute_crawling(sources: List[str], limit: int = 10):
                         'title': normalized_article['title']
                     }
                 else:
+                    metrics_collector.record_kafka_message('raw-news', False)
                     return {
                         'status': 'kafka_failed',
                         'reason': 'Failed to send to Kafka'
@@ -221,6 +231,10 @@ async def execute_crawling(sources: List[str], limit: int = 10):
                     
         except Exception as e:
             crawler_stats[source]["error_count"] += 1
+            # 에러 메트릭 기록
+            error_type = metrics_collector.get_error_type_from_exception(e)
+            metrics_collector.record_crawl_error(source, error_type)
+            metrics_collector.record_article_processed(source, 'error')
             return {
                 'status': 'error',
                 'reason': str(e)
@@ -464,4 +478,88 @@ async def reset_retry_stats():
         return {"message": "Retry statistics reset successfully"}
     except Exception as e:
         logger.error(f"Error resetting retry stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Prometheus 메트릭 엔드포인트는 API prefix 없이 제공
+metrics_router = APIRouter()
+
+
+@metrics_router.get("/metrics")
+async def get_metrics():
+    """Prometheus 메트릭 엔드포인트"""
+    try:
+        from ..metrics import generate_metrics, CONTENT_TYPE_LATEST
+        
+        metrics_data = generate_metrics()
+        return Response(
+            content=metrics_data,
+            media_type=CONTENT_TYPE_LATEST,
+            headers={"Content-Type": CONTENT_TYPE_LATEST}
+        )
+    except Exception as e:
+        logger.error(f"Error generating metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/metrics/stats")
+async def get_metrics_stats():
+    """메트릭 통계 조회 (디버깅용)"""
+    try:
+        from ..metrics import get_metrics_stats
+        return get_metrics_stats()
+    except Exception as e:
+        logger.error(f"Error getting metrics stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/scheduler/stats")
+async def get_scheduler_stats():
+    """스케줄러 통계 조회"""
+    try:
+        from ..scheduler import get_scheduler
+        scheduler = get_scheduler()
+        return scheduler.get_stats()
+    except Exception as e:
+        logger.error(f"Error getting scheduler stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/scheduler/tasks")
+async def get_scheduler_tasks():
+    """스케줄러 태스크 상태 조회"""
+    try:
+        from ..scheduler import get_scheduler
+        scheduler = get_scheduler()
+        return {
+            "tasks": scheduler.get_task_status(),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting scheduler tasks: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scheduler/start")
+async def start_scheduler():
+    """스케줄러 시작"""
+    try:
+        from ..scheduler import get_scheduler
+        scheduler = get_scheduler()
+        scheduler.start()
+        return {"status": "started", "message": "Scheduler started successfully"}
+    except Exception as e:
+        logger.error(f"Error starting scheduler: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scheduler/stop")
+async def stop_scheduler():
+    """스케줄러 중지"""
+    try:
+        from ..scheduler import stop_scheduler
+        stop_scheduler()
+        return {"status": "stopped", "message": "Scheduler stopped successfully"}
+    except Exception as e:
+        logger.error(f"Error stopping scheduler: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -375,11 +375,20 @@ class HighPerformanceScheduler:
                     f"{article_count} articles in {processing_time:.2f}s"
                 )
                 
+                # 크롤링 소요 시간 메트릭 기록
+                self.metrics_collector.record_crawl_duration(source_id, processing_time)
+                
                 return True
                 
         except Exception as e:
             logger.error(f"Error in crawler {source_id}: {e}")
             self._stats["failed_crawls"] += 1
+            
+            # 에러 메트릭 기록
+            error_type = self.metrics_collector.get_error_type_from_exception(e)
+            self.metrics_collector.record_crawl_error(source_id, error_type)
+            self.metrics_collector.record_crawl_request(source_id, False)
+            
             return False
     
     async def _scheduler_loop(self):
@@ -430,6 +439,19 @@ class HighPerformanceScheduler:
                 self._stats["throughput_per_hour"] = (
                     self._stats["total_articles"] / elapsed_hours
                 )
+                
+                # 처리량 메트릭 업데이트
+                self.metrics_collector.update_throughput(self._stats["throughput_per_hour"])
+                
+                # 평균 지연시간 메트릭 업데이트
+                self.metrics_collector.update_latency(self._stats["average_latency"])
+                
+                # 배치 큐 크기 메트릭 업데이트
+                queue_status = self.batch_processor.get_queue_status()
+                self.metrics_collector.update_batch_queue_size(queue_status.get('queue_size', 0))
+                
+                # 중복 제거율 업데이트
+                self.metrics_collector.update_deduplication_rate('1h')
                 
                 logger.info(
                     f"Current throughput: "
