@@ -35,10 +35,10 @@ Web UI의 Sprint 1 목표는 리스크 모니터링을 위한 기본 대시보�
 참조: [주요 컴포넌트](../../docs/trd/phase1/TRD_Product_Squad_P1.md#main-components)
 
 ### Week 4: 최적화 및 반응형
-- [ ] 모바일 반응형 레이아웃
-- [ ] 이미지 최적화
-- [ ] 코드 스플리팅
-- [ ] PWA 설정
+- [x] 모바일 반응형 레이아웃
+- [x] 이미지 최적화
+- [x] 코드 스플리팅
+- [x] PWA 설정
 
 참조: [반응형 디자인 가이드](../../docs/trd/phase1/TRD_Product_Squad_P1.md#responsive-design)
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, Search, User, LogOut } from "lucide-react";
+import { Bell, Search, User, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +14,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  onMenuClick?: () => void;
+}
+
+export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const [searchValue, setSearchValue] = useState("");
   
   const handleLogout = () => {
     logout();
@@ -24,24 +30,37 @@ export function DashboardHeader() {
   
   return (
     <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div className="h-full px-6 flex items-center justify-between">
-        <div className="flex-1 max-w-lg">
+      <div className="h-full px-4 md:px-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onMenuClick}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        <div className="flex-1 max-w-lg mx-4 hidden sm:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
               placeholder="기업명 또는 리스크 검색..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
         
-        <div className="flex items-center gap-3 ml-6">
-          <Button variant="ghost" size="icon">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex">
             <Bell className="h-5 w-5" />
           </Button>
           
-          <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
+          <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

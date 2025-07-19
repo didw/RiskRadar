@@ -1,8 +1,38 @@
+import dynamic from "next/dynamic";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RiskOverviewChart } from "@/components/charts/risk-overview-chart";
-import { RiskDistributionChart } from "@/components/charts/risk-distribution-chart";
-import { RiskMetrics } from "@/components/dashboard/risk-metrics";
-import { EnhancedCompanyList } from "@/components/dashboard/enhanced-company-list";
+import { RiskMetricsGraphQL } from "@/components/dashboard/risk-metrics-graphql";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Dynamic imports for heavy components
+const RiskOverviewChartGraphQL = dynamic(
+  () => import("@/components/charts/risk-overview-chart-graphql").then(mod => mod.RiskOverviewChartGraphQL),
+  { 
+    loading: () => <Skeleton className="w-full h-[300px]" />,
+    ssr: false 
+  }
+);
+
+const RiskDistributionChart = dynamic(
+  () => import("@/components/charts/risk-distribution-chart").then(mod => mod.RiskDistributionChart),
+  { 
+    loading: () => <Skeleton className="w-full h-[300px]" />,
+    ssr: false 
+  }
+);
+
+const EnhancedCompanyListGraphQL = dynamic(
+  () => import("@/components/dashboard/enhanced-company-list-graphql").then(mod => mod.EnhancedCompanyListGraphQL),
+  { 
+    loading: () => <Skeleton className="w-full h-[400px]" /> 
+  }
+);
+
+const NewsTimeline = dynamic(
+  () => import("@/components/dashboard/news-timeline").then(mod => mod.NewsTimeline),
+  { 
+    loading: () => <Skeleton className="w-full h-[400px]" /> 
+  }
+);
 
 export default function DashboardPage() {
   return (
@@ -14,7 +44,7 @@ export default function DashboardPage() {
         </p>
       </div>
       
-      <RiskMetrics />
+      <RiskMetricsGraphQL />
       
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="col-span-full">
@@ -25,7 +55,7 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RiskOverviewChart />
+            <RiskOverviewChartGraphQL />
           </CardContent>
         </Card>
         
@@ -53,7 +83,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         
-        <Card className="col-span-full">
+        <Card className="col-span-full lg:col-span-1">
           <CardHeader>
             <CardTitle>주요 모니터링 기업</CardTitle>
             <CardDescription>
@@ -61,9 +91,13 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <EnhancedCompanyList />
+            <EnhancedCompanyListGraphQL />
           </CardContent>
         </Card>
+        
+        <div className="col-span-full lg:col-span-1">
+          <NewsTimeline />
+        </div>
       </div>
     </div>
   );

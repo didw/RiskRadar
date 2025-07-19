@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { ApolloWrapper } from "@/lib/apollo/provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +17,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={inter.className}>{children}</body>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#3B82F6" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
+      <body className={inter.className}>
+        <ApolloWrapper>{children}</ApolloWrapper>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
+        />
+      </body>
     </html>
   );
 }
