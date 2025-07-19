@@ -1,0 +1,95 @@
+# Subscription types for real-time updates
+type Subscription {
+  # 실시간 뉴스 업데이트
+  newsUpdate(filters: NewsUpdateFilter): NewsUpdate!
+  
+  # 리스크 알림
+  riskAlert(companyIds: [ID!]!): RiskAlert!
+  
+  # 회사별 리스크 점수 변경
+  riskScoreUpdate(companyId: ID!): RiskScoreUpdate!
+  
+  # 시스템 상태 업데이트
+  systemStatus: SystemStatus!
+}
+
+input NewsUpdateFilter {
+  companyIds: [ID!]
+  industries: [String!]
+  minRiskScore: Float
+  sources: [String!]
+}
+
+# NewsUpdate type is already defined in news.graphql
+
+type RiskAlert {
+  id: ID!
+  type: RiskAlertType!
+  severity: RiskSeverity!
+  company: Company!
+  message: String!
+  details: RiskAlertDetails!
+  timestamp: String!
+  acknowledged: Boolean!
+}
+
+enum RiskAlertType {
+  SCORE_CHANGE
+  NEWS_SPIKE
+  NETWORK_RISK
+  SENTIMENT_SHIFT
+  COMPLIANCE_ISSUE
+}
+
+enum RiskSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+type RiskAlertDetails {
+  previousScore: Float
+  currentScore: Float
+  changePercentage: Float
+  triggerEvent: String
+  affectedMetrics: [String!]!
+  relatedNews: [NewsArticle!]!
+}
+
+type RiskScoreUpdate {
+  companyId: ID!
+  company: Company!
+  previousScore: Float!
+  currentScore: Float!
+  changePercentage: Float!
+  timestamp: String!
+  factors: [RiskFactor!]!
+}
+
+type RiskFactor {
+  type: String!
+  impact: Float!
+  confidence: Float!
+  description: String!
+}
+
+type SystemStatus {
+  overall: HealthStatus!
+  services: [ServiceStatus!]!
+  timestamp: String!
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  DOWN
+}
+
+type ServiceStatus {
+  name: String!
+  status: HealthStatus!
+  responseTime: Float
+  errorRate: Float
+  lastCheck: String!
+}
