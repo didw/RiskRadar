@@ -158,7 +158,7 @@ class BaseCrawler(ABC):
                 published_at = datetime.now().isoformat()
         
         # Create standardized article
-        return {
+        normalized_article = {
             'id': raw_article.get('id', self.create_article_id(normalized_url)),
             'title': title,
             'content': content,
@@ -173,6 +173,33 @@ class BaseCrawler(ABC):
             'image_url': self.normalize_url(raw_article.get('image_url', '')) if raw_article.get('image_url') else '',
             'metadata': raw_article.get('metadata', {})
         }
+        
+        return normalized_article
+    
+    def to_kafka_message(self, article_data: Dict[str, Any]):
+        """기사 데이터를 Kafka 메시지로 변환"""
+        from ..kafka.producer import NewsMessage
+        
+        # images 배열 생성
+        images = []
+        if article_data.get('image_url'):
+            images = [article_data['image_url']]
+        
+        return NewsMessage(
+            id=article_data['id'],
+            title=article_data['title'],
+            content=article_data['content'],
+            source=article_data['source'],
+            url=article_data['url'],
+            published_at=article_data['published_at'],
+            crawled_at=article_data['crawled_at'],
+            summary=article_data.get('summary'),
+            author=article_data.get('author'),
+            category=article_data.get('category'),
+            tags=article_data.get('tags'),
+            images=images,
+            metadata=article_data.get('metadata')
+        )
     
     @abstractmethod
     async def fetch_article_list(self) -> List[str]:

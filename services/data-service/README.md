@@ -86,6 +86,48 @@ GET /api/v1/stats/collection
 GET /api/v1/stats/collection?from_time=2024-07-19T00:00:00&to_time=2024-07-19T23:59:59
 ```
 
+### Kafka Producer 모니터링
+```bash
+# Kafka Producer 통계
+GET /kafka/stats
+
+# Kafka 연결 상태
+GET /kafka/health
+```
+
+### 중복 제거 모니터링
+```bash
+# 중복 제거 통계
+GET /deduplication/stats
+
+# 중복 제거 시스템 상태
+GET /deduplication/health
+```
+
+### 배치 처리 모니터링
+```bash
+# 배치 처리 통계
+GET /batch/stats
+
+# 배치 큐 상태
+GET /batch/queue
+
+# 최근 배치 결과 (기본 10개)
+GET /batch/recent?limit=20
+```
+
+### 에러 재시도 모니터링
+```bash
+# 재시도 통계
+GET /retry/stats
+
+# Circuit Breaker 상태
+GET /retry/circuit-breaker/fetch_page_chosun
+
+# 재시도 통계 초기화
+POST /retry/reset-stats
+```
+
 ## 🔧 설정
 
 ### 환경 변수

@@ -4,11 +4,100 @@
 ## [Unreleased]
 
 ### 🚀 Planned
-- Kafka Producer 실제 구현
-- Bloom Filter 기반 중복 제거
-- 배치 처리 시스템 (100건 단위)
 - 실시간 크롤링 스케줄러
 - Prometheus 메트릭 추가
+- 성능 최적화 (1,000건/시간)
+
+## [0.4.0] - 2025-07-19
+
+### Sprint 1 Week 3: Kafka 통합 및 중복 제거
+
+#### 🚀 Added
+- **최적화된 Kafka Producer** (`src/kafka/producer.py`)
+  - 배치 처리 (100건 단위)
+  - gzip 압축으로 네트워크 효율성 향상
+  - 비동기 전송 및 백그라운드 배치 처리
+  - 성능 모니터링 및 통계 수집
+  - Circuit breaker 패턴 적용
+
+- **Bloom Filter 기반 중복 제거** (`src/processors/deduplicator.py`)
+  - URL 기반 중복 탐지 (SHA256 해시)
+  - 제목 유사도 기반 중복 탐지 (Jaccard similarity)
+  - Redis 영구 저장 (선택사항)
+  - 메모리 전용 모드 지원
+  - 80% 이상 유사도 시 중복 판정
+
+- **배치 처리 시스템** (`src/processors/batch_processor.py`)
+  - 100건 단위 배치 처리
+  - 우선순위 큐 (연합뉴스 최우선)
+  - 동시성 제어 (최대 3개 배치)
+  - 처리 상태 추적 및 통계
+  - 타임아웃 및 에러 처리
+
+- **고급 에러 재시도 메커니즘** (`src/processors/retry_manager.py`)
+  - 지수 백오프 + Jitter
+  - 에러 타입별 재시도 정책
+  - Circuit Breaker 패턴
+  - 자동 에러 분류 시스템
+  - Rate limit 특별 처리
+
+#### 🔧 Enhanced
+- **크롤링 파이프라인 개선**
+  - 중복 제거 통합으로 데이터 품질 향상
+  - 배치 처리로 처리량 대폭 증가
+  - Kafka 배치 전송으로 네트워크 효율성 개선
+  - 소스별 우선순위 적용
+
+- **BaseCrawler 기능 강화**
+  - `to_kafka_message()` 메서드 추가
+  - 데이터 정규화 개선
+  - 재시도 메커니즘 통합
+
+#### 📊 API Endpoints
+- **Kafka 모니터링**
+  - `GET /kafka/stats` - Producer 통계
+  - `GET /kafka/health` - 연결 상태
+
+- **중복 제거 모니터링**
+  - `GET /deduplication/stats` - 중복 제거 통계
+  - `GET /deduplication/health` - 시스템 상태
+
+- **배치 처리 모니터링**
+  - `GET /batch/stats` - 배치 처리 통계
+  - `GET /batch/queue` - 큐 상태
+  - `GET /batch/recent` - 최근 배치 결과
+
+- **재시도 메커니즘 모니터링**
+  - `GET /retry/stats` - 재시도 통계
+  - `GET /retry/circuit-breaker/{operation}` - Circuit breaker 상태
+  - `POST /retry/reset-stats` - 통계 초기화
+
+#### 🧪 Testing
+- **Kafka Producer 테스트**
+  - 37개 단위 테스트 (모킹 기반)
+  - 배치 처리 플로우 검증
+  - 설정 및 메시지 변환 테스트
+
+#### ⚡ Performance
+- **처리량 개선**
+  - 개별 처리 → 100건 배치 처리
+  - 압축으로 네트워크 사용량 감소
+  - 동시성 제어로 안정성 확보
+
+- **중복 제거 효율성**
+  - Bloom Filter로 O(1) URL 중복 검사
+  - 제목 유사도로 정교한 중복 탐지
+  - 최대 5% 중복률 목표
+
+#### 🔧 Changed
+- `execute_crawling()` 배치 처리 적용
+- API 응답에 더 많은 통계 정보 포함
+- 에러 처리 로직 표준화
+
+#### 📝 Documentation
+- 각 시스템별 상세 주석 추가
+- API 엔드포인트 문서화
+- 설정 파라미터 설명
 
 ## [0.3.1] - 2025-07-19
 
