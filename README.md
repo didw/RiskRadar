@@ -124,12 +124,27 @@ docker-compose up -d
 # 또는 개발 환경 실행
 make dev
 
-# 5. 서비스 확인
-# Web UI: http://localhost:3000
+# 5. 초기 데이터 시딩
+python scripts/seed_neo4j.py
+
+# 6. 서비스 확인
+# Web UI: http://localhost:3000 (현재 빌드 이슈)
 # API Gateway: http://localhost:8004/graphql
 # ML Service: http://localhost:8002/docs
 # Graph Service: http://localhost:8003/docs
 # Neo4j Browser: http://localhost:7474
+```
+
+### 통합 테스트
+```bash
+# End-to-End 테스트 실행
+python scripts/test_e2e_flow.py
+
+# 개별 서비스 테스트
+curl http://localhost:8001/health  # Data Service
+curl http://localhost:8002/api/v1/health  # ML Service
+curl http://localhost:8003/health  # Graph Service
+curl http://localhost:8004/health  # API Gateway
 ```
 
 ### 개발 가이드
@@ -212,15 +227,15 @@ docker-compose logs -f [service-name]
 ## 📊 프로젝트 현황
 
 ### 개발 일정
-- **Phase 1** (Week 1-4): Foundation - 기본 인프라 구축 🚧
+- **Phase 1** (Week 1-4): Foundation - 기본 인프라 구축 ✅
   - Sprint 0: Walking Skeleton ✅
-  - Sprint 1: Core Features 🚧
+  - Sprint 1: Core Features ✅
     - Week 1: 기본 구조 및 Mock 구현 ✅
     - Week 2: 서비스 통합 및 테스트 ✅
-    - Week 3: 실시간 기능 및 최적화 📅
-  - Sprint 2: Full Integration 📅
-- **Phase 2** (Week 5-8): Core Engine - RKG 엔진 개발
-- **Phase 3** (Week 9-12): Product Polish - UI/UX 최적화
+    - Week 3: 실시간 기능 및 고급 기능 ✅
+    - Week 4: 통합 테스트 및 문서화 ✅
+- **Phase 2** (Week 5-8): Core Engine - RKG 엔진 개발 📅
+- **Phase 3** (Week 9-12): Product Polish - UI/UX 최적화 📅
 
 ### 팀 구성
 - **Data Squad** (3명): 데이터 수집 및 파이프라인
@@ -238,6 +253,8 @@ docker-compose logs -f [service-name]
 - [운영 가이드](docs/operations/README.md)
 
 ### Sprint 문서
+- [Sprint 1 Summary](docs/SPRINT1_SUMMARY.md) - Sprint 1 완료 보고서
+- [Week 4 Integration Status](docs/week4_integration_status.md) - 통합 현황
 - [Sprint 0 Integration Guide](docs/trd/phase1/Sprint_0_Integration_Guide.md)
 - [Sprint Breakdown](docs/trd/phase1/Sprint_Breakdown.md)
 - [Integration Strategy](docs/trd/phase1/Integration_Strategy.md)

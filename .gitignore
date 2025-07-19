@@ -47,6 +47,9 @@ htmlcov/
 tmp/
 temp/
 *.tmp
+test_*.json
+test-*.js
+*.bak
 
 # OS
 Thumbs.db

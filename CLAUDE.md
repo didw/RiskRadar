@@ -71,7 +71,13 @@ RiskRadar/
 make setup
 
 # 전체 서비스 실행 (개발 모드)
-make dev
+docker-compose up -d
+
+# 초기 데이터 시딩
+python scripts/seed_neo4j.py
+
+# 통합 테스트 실행
+python scripts/test_e2e_flow.py
 
 # 특정 서비스만 실행
 make dev-data-service
@@ -94,6 +100,7 @@ make test
 ### Sprint 가이드
 - [Sprint 0 Quick Start](./docs/trd/phase1/Sprint_0_Quick_Start.md) - 빠른 시작
 - [Integration Strategy](./docs/trd/phase1/Integration_Strategy.md) - 통합 전략
+- [Sprint 1 Summary](./docs/SPRINT1_SUMMARY.md) - Sprint 1 완료 보고서
 
 ## 개발 워크플로우
 
@@ -125,5 +132,25 @@ kafka-console-consumer --topic {topic-name}
 - **Integration Sync**: 매일 14:00
 - **Slack**: #riskradar-dev
 
+## Sprint 1 완료 현황
+
+### 주요 성과
+- ✅ 마이크로서비스 아키텍처 구축 완료
+- ✅ 종단간 데이터 파이프라인 구현 (Crawler → Kafka → ML → Graph)
+- ✅ 한국어 NLP 처리 파이프라인 구현
+- ✅ GraphQL API 및 WebSocket 실시간 업데이트
+- ✅ 통합 테스트 프레임워크 구축
+
+### 알려진 이슈
+- Web UI 모듈 로딩 오류 (Sprint 2에서 해결 예정)
+- Graph Service 엔티티 캐시 동기화 문제
+- 성능 최적화 필요 (Sprint 2로 연기)
+
+### 개발 팁
+1. **서비스 연동 테스트**: `python scripts/test_e2e_flow.py` 실행
+2. **Kafka 메시지 확인**: `docker exec riskradar-kafka kafka-console-consumer --topic enriched-news --from-beginning`
+3. **Neo4j 데이터 확인**: http://localhost:7474 에서 브라우저 접속
+4. **로그 실시간 확인**: `docker-compose logs -f [service-name]`
+
 ---
-*최종 업데이트: 2024-07-19*
+*최종 업데이트: 2025-07-19*

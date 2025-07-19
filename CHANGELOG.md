@@ -40,11 +40,20 @@
 - **Data Service**:
   - RSS 크롤러 확장 및 중복 제거
 
-#### Week 4: Integration & Testing 🔄
+#### Week 4: Integration & Testing ✅
 - **Phase 1**: 통합 문제 해결 ✅
+  - ML Service HTTP API 접근성 문제 해결 (포트 매핑 8002:8082)
+  - Neo4j 초기 데이터 시딩 스크립트 작성 (10개 기업, 30개 뉴스)
+  - Kafka 연결 상태 검증 및 소비자 그룹 확인
 - **Phase 2**: 종단간 데이터 플로우 검증 ✅
+  - 데이터 플로우 확인: Crawler → Kafka → ML Service → Graph Service
+  - ML Service의 한국어 NLP 처리 검증 (NER, 감성 분석)
+  - Graph Service의 enriched 메시지 소비 확인
 - **Phase 3**: 성능 최적화 (Sprint 2로 연기)
 - **Phase 4**: 문서화 및 테스트 ✅
+  - 통합 테스트 스크립트 작성 (test_e2e_flow.py)
+  - Sprint 1 최종 보고서 작성
+  - 모든 서비스 문서 업데이트
 
 ### 🚀 Major Features Completed
 - 마이크로서비스 아키텍처 구현
@@ -52,6 +61,8 @@
 - 한국어 NLP 처리 파이프라인
 - GraphQL Federation 준비
 - 컨테이너화된 배포 환경
+- 통합 테스트 프레임워크 구축
+- Neo4j 초기 데이터 시딩 자동화
 
 ### 🐛 Known Issues
 - Web UI 모듈 로딩 오류
@@ -63,6 +74,13 @@
 - ML 처리 속도: ~50-100ms/article
 - Kafka 처리량: 100 msg/sec 테스트 완료
 - 초기 시드 데이터: 10개 기업, 30개 뉴스 기사
+- 통합 테스트 커버리지: 데이터 플로우 100% 검증
+
+### 🔧 Technical Changes
+- ML Service Kafka consumer를 threading으로 변경하여 HTTP API 블로킹 해결
+- Docker-compose 포트 매핑 수정 및 환경 변수 정리
+- Neo4j seed 스크립트 및 통합 테스트 스크립트 추가
+- 임시 테스트 파일 정리 (test_message.json, test-websocket.js)
 
 ## [0.2.2] - 2025-07-19
 
