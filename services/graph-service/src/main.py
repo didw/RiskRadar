@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import os
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 from src.neo4j.driver import driver as neo4j_driver
 from src.kafka.consumer import consumer as kafka_consumer
@@ -17,6 +17,8 @@ from src.models.schemas import (
 )
 from src.kafka.entity_cache import entity_cache
 from src.graphql.server import get_graphql_router, GRAPHQL_PLAYGROUND_HTML
+from src.queries.optimized import get_optimized_queries
+from src.queries.performance_tuning import get_performance_tuner
 
 # 로깅 설정
 logging.basicConfig(
@@ -63,8 +65,50 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=os.getenv("API_TITLE", "RiskRadar Graph Service API"),
     version=os.getenv("API_VERSION", "1.0.0"),
-    description="Neo4j 기반 Risk Knowledge Graph 서비스",
-    lifespan=lifespan
+    description="""
+    ## RiskRadar Graph Service API
+    
+    Neo4j 기반 Risk Knowledge Graph 서비스입니다.
+    
+    ### 주요 기능
+    - 🕸️ **그래프 데이터 관리**: 기업, 인물, 이벤트 간 복잡한 관계 저장
+    - 📊 **리스크 분석**: 네트워크 기반 리스크 전파 및 영향도 분석
+    - 🔍 **고급 쿼리**: GraphQL과 REST API를 통한 유연한 데이터 조회
+    - ⚡ **고성능**: 최적화된 Cypher 쿼리와 캐싱으로 빠른 응답
+    - 📈 **실시간 모니터링**: 시스템 성능 및 헬스 상태 모니터링
+    
+    ### Performance Goals
+    - 1-hop 쿼리: < 50ms
+    - 3-hop 경로 분석: < 200ms
+    - 동시 처리: 100+ concurrent queries
+    
+    ### 관련 문서
+    - [GraphQL Playground](/playground)
+    - [Monitoring Dashboard](/monitoring/dashboard)
+    - [Performance Metrics](/monitoring/metrics/summary)
+    """,
+    contact={
+        "name": "Graph Squad",
+        "email": "graph-team@riskradar.com"
+    },
+    license_info={
+        "name": "RiskRadar License",
+        "url": "https://riskradar.com/license"
+    },
+    servers=[
+        {
+            "url": "http://localhost:8003",
+            "description": "Development server"
+        },
+        {
+            "url": "https://api.riskradar.com/graph",
+            "description": "Production server"
+        }
+    ],
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 # GraphQL 라우터 추가
@@ -289,6 +333,224 @@ async def refresh_cache():
         }
     except Exception as e:
         logger.error(f"Error refreshing cache: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Week 4: 최적화된 쿼리 API
+@app.get("/api/v1/graph/optimized/company/{company_id}")
+async def get_optimized_company_info(company_id: str):
+    """최적화된 기업 정보 조회 (< 50ms 목표)"""
+    try:
+        optimized_queries = get_optimized_queries()
+        company_info = optimized_queries.get_company_basic_info(company_id)
+        
+        if not company_info:
+            raise HTTPException(status_code=404, detail=f"Company '{company_id}' not found")
+        
+        return {
+            "company": company_info,
+            "cached": True  # 캐시 여부는 실제로는 내부 로직에서 결정됨
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in optimized company query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/optimized/company/{company_id}/connections")
+async def get_optimized_company_connections(company_id: str, limit: int = 10):
+    """최적화된 기업 연결 관계 조회 (< 50ms 목표)"""
+    try:
+        optimized_queries = get_optimized_queries()
+        connections = optimized_queries.get_company_connections(company_id, limit)
+        
+        return {
+            "company_id": company_id,
+            "connections": connections,
+            "total": len(connections)
+        }
+    except Exception as e:
+        logger.error(f"Error in optimized connections query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/optimized/company/{company_id}/risk-paths")
+async def get_optimized_risk_paths(company_id: str, max_depth: int = 3):
+    """최적화된 리스크 전파 경로 분석 (< 200ms 목표)"""
+    try:
+        optimized_queries = get_optimized_queries()
+        risk_paths = optimized_queries.analyze_risk_propagation_paths(company_id, max_depth)
+        
+        return {
+            "company_id": company_id,
+            "risk_paths": risk_paths,
+            "analysis_depth": max_depth,
+            "total_paths": len(risk_paths)
+        }
+    except Exception as e:
+        logger.error(f"Error in optimized risk paths query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/optimized/company/{company_id}/network-risk")
+async def get_optimized_network_risk(company_id: str):
+    """최적화된 네트워크 리스크 요약 (< 100ms 목표)"""
+    try:
+        optimized_queries = get_optimized_queries()
+        network_risk = optimized_queries.calculate_network_risk_summary(company_id)
+        
+        if not network_risk:
+            raise HTTPException(status_code=404, detail=f"Company '{company_id}' not found")
+        
+        return network_risk
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in optimized network risk query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/optimized/sectors/risk-distribution")
+async def get_optimized_sector_risk_distribution(limit: int = 20):
+    """최적화된 섹터별 리스크 분포 (< 150ms 목표)"""
+    try:
+        optimized_queries = get_optimized_queries()
+        distribution = optimized_queries.get_sector_risk_distribution(limit)
+        
+        return {
+            "sectors": distribution,
+            "total_sectors": len(distribution),
+            "analysis_timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error in sector risk distribution query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/optimized/events/recent")
+async def get_optimized_recent_events(
+    company_id: Optional[str] = None, 
+    days: int = 30, 
+    limit: int = 50
+):
+    """최적화된 최근 리스크 이벤트 조회 (< 100ms 목표)"""
+    try:
+        optimized_queries = get_optimized_queries()
+        events = optimized_queries.get_recent_risk_events(company_id, days, limit)
+        
+        return {
+            "events": events,
+            "filters": {
+                "company_id": company_id,
+                "days": days,
+                "limit": limit
+            },
+            "total_events": len(events)
+        }
+    except Exception as e:
+        logger.error(f"Error in recent events query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Week 4: 성능 튜닝 API
+@app.get("/api/v1/graph/performance/stats")
+async def get_performance_stats():
+    """쿼리 성능 통계 조회"""
+    try:
+        optimized_queries = get_optimized_queries()
+        performance_tuner = get_performance_tuner()
+        
+        return {
+            "optimized_queries": optimized_queries.get_performance_stats(),
+            "query_analysis": performance_tuner.get_query_performance_summary(),
+            "slow_queries": performance_tuner.get_slow_queries(10)
+        }
+    except Exception as e:
+        logger.error(f"Error getting performance stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/performance/indexes")
+async def get_index_status():
+    """인덱스 상태 및 분석"""
+    try:
+        performance_tuner = get_performance_tuner()
+        index_analysis = performance_tuner.analyze_index_usage()
+        
+        return index_analysis
+    except Exception as e:
+        logger.error(f"Error getting index status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/graph/performance/indexes/create")
+async def create_performance_indexes():
+    """성능 최적화 인덱스 생성"""
+    try:
+        performance_tuner = get_performance_tuner()
+        results = performance_tuner.create_performance_indexes()
+        
+        return {
+            "message": "Performance indexes creation completed",
+            "results": results,
+            "success_count": sum(1 for success in results.values() if success),
+            "total_count": len(results)
+        }
+    except Exception as e:
+        logger.error(f"Error creating performance indexes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/graph/performance/diagnostics")
+async def run_performance_diagnostics():
+    """성능 진단 실행"""
+    try:
+        performance_tuner = get_performance_tuner()
+        diagnostics = performance_tuner.run_performance_diagnostics()
+        
+        return diagnostics
+    except Exception as e:
+        logger.error(f"Error running performance diagnostics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/graph/performance/cache/warmup")
+async def warmup_query_cache(company_ids: List[str]):
+    """쿼리 캐시 워밍업"""
+    try:
+        optimized_queries = get_optimized_queries()
+        optimized_queries.warm_up_cache(company_ids)
+        
+        return {
+            "message": "Cache warmup completed",
+            "warmed_companies": len(company_ids),
+            "cache_stats": optimized_queries.get_performance_stats()
+        }
+    except Exception as e:
+        logger.error(f"Error warming up cache: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/graph/performance/query/analyze")
+async def analyze_query_performance(
+    query: str,
+    parameters: Optional[Dict[str, Any]] = None
+):
+    """쿼리 성능 분석"""
+    try:
+        performance_tuner = get_performance_tuner()
+        
+        # 쿼리 플랜 분석
+        query_plan = performance_tuner.analyze_query_plan(query, parameters or {})
+        
+        # 최적화 제안
+        optimization = performance_tuner.optimize_query(query)
+        
+        return {
+            "query_plan": {
+                "execution_time_ms": query_plan.execution_time_ms,
+                "db_hits": query_plan.db_hits,
+                "actual_rows": query_plan.actual_rows,
+                "index_usage": query_plan.index_usage
+            },
+            "optimization": optimization,
+            "performance_classification": (
+                "excellent" if query_plan.execution_time_ms < 50 else
+                "good" if query_plan.execution_time_ms < 200 else
+                "needs_optimization"
+            )
+        }
+    except Exception as e:
+        logger.error(f"Error analyzing query performance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

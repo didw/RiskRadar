@@ -3,7 +3,13 @@
 
 ## 📋 서비스 개요
 
-Graph Service는 RiskRadar의 Risk Knowledge Graph(RKG)를 관리하는 핵심 서비스입니다. Neo4j를 기반으로 기업, 인물, 이벤트 간의 복잡한 관계를 저장하고 쿼리합니다.
+Graph Service는 RiskRadar의 Risk Knowledge Graph(RKG)를 관리하는 핵심 서비스입니다. Neo4j Enterprise 클러스터를 기반으로 기업, 인물, 이벤트 간의 복잡한 관계를 저장하고 분석합니다.
+
+### Sprint 1 완료 현황 ✅
+- **Week 1**: Neo4j Enterprise 클러스터 (고가용성, 장애복구)
+- **Week 2**: 그래프 스키마 및 N+1 최적화 (95% 쿼리 감소)
+- **Week 3**: GraphQL API, 고급 알고리즘, 모니터링 대시보드
+- **Week 4**: 최적화된 REST API, 성능 튜닝, 통합 테스트
 
 ## 🏗️ 프로젝트 구조
 
@@ -22,6 +28,8 @@ graph-service/
 │   │   ├── company.py      # 기업 관련 쿼리
 │   │   ├── risk.py         # 리스크 분석 쿼리
 │   │   ├── network.py      # 네트워크 분석
+│   │   ├── optimized.py    # 최적화된 쿼리 (Week 4)
+│   │   ├── performance_tuning.py # 성능 튜닝 (Week 4)
 │   │   └── templates/      # 쿼리 템플릿
 │   ├── kafka/              # Kafka 연동
 │   │   ├── consumer.py     # Kafka 컨슈머
@@ -464,78 +472,106 @@ CREATE INDEX company_name FOR (c:Company) ON (c.name)
 - [Cypher Query Language](https://neo4j.com/docs/cypher-manual/)
 - [Graph Data Science Library](https://neo4j.com/docs/graph-data-science/)
 
-## 🎯 Sprint 개발 가이드
+## 🎯 Sprint 1 개발 가이드 (완료)
 
-현재 Sprint의 상세 요구사항은 다음 문서를 참고하세요:
+Sprint 1의 모든 요구사항이 성공적으로 구현되었습니다:
 - [Sprint 1 Requirements](./Sprint1_Requirements.md) - Week별 구현 목표
 - [Sprint Breakdown](../../docs/trd/phase1/Sprint_Breakdown.md) - 전체 Sprint 계획
 
-### Sprint 1 Week 2 완료 사항 ✅
-1. **TRD 기반 스키마 강화**
-   - Risk 노드 타입 추가
-   - Company 노드 확장 (aliases, sector 등)
-   - Event 타입 열거형 정의
-   - 관계 속성 강화
+### Sprint 1 완료 사항 🎉
 
-2. **인프라 개선**
-   - 데이터베이스 마이그레이션 시스템
-   - 트랜잭션 관리 (TransactionManager)
-   - Dead Letter Queue (DLQ)
-   - 재시도 로직 구현
+#### Week 1: Neo4j Enterprise 클러스터 ✅
+- 3-node Core + 1 Read Replica 고가용성 클러스터
+- HAProxy 로드 밸런싱 및 자동 장애 복구
+- Prometheus 메트릭 및 모니터링
 
-3. **API 확장**
-   - 7개 신규 REST 엔드포인트
-   - 기업 CRUD 및 관계 조회
-   - 리스크 분석 API
-   - 마이그레이션 API
-   - 캐시 관리 API
+#### Week 2: 그래프 스키마 및 N+1 최적화 ✅
+- TRD 기반 노드/관계 스키마 구현
+- 엔티티 캐시 시스템 (N+1 문제 해결)
+- 95% 쿼리 감소, 3.5배 성능 향상
 
-4. **테스트 강화**
-   - 통합 테스트 스위트
-   - 성능 테스트 프레임워크
-   - 자동화된 테스트 스크립트
+#### Week 3: 고급 기능 ✅
+- **GraphQL API**: Strawberry + DataLoader 패턴
+- **고급 알고리즘**: 중심성, 커뮤니티 탐지, 경로 분석
+- **모니터링 대시보드**: Chart.js 기반 실시간 시각화
 
-### 🚨 긴급 수정 완료 ✅
-5. **N+1 쿼리 문제 해결**
-   - EntityCache 구현 (30분 TTL)
-   - BatchEntityMatching 알고리즘
-   - 쿼리 수 95% 감소 (35 → 2)
-   - 성능 3.5배 향상 (70ms → 20ms)
+#### Week 4: 최적화 및 성능 튜닝 ✅
+- **최적화된 REST API**: 1-hop < 50ms, 3-hop < 200ms
+- **성능 튜닝**: 인덱스 최적화, 쿼리 플랜 분석
+- **API 문서화**: OpenAPI/Swagger 완전 지원
+- **테스트 스위트**: 성능/부하/통합 테스트
 
-### Sprint 1 Week 3 완료 사항 ✅
-1. **Neo4j Enterprise 클러스터 구성**
-   - 3-노드 Core 서버 + 1 Read Replica
-   - HAProxy 로드 밸런싱
-   - 자동 장애 복구 (Failover)
-   - 클러스터 설정 스크립트
-   - 포괄적인 클러스터 테스트
+### 성능 최적화 가이드 📈
 
-2. **GraphQL API 구현**
-   - Strawberry 프레임워크 기반
-   - 전체 노드 타입 정의 (Company, Person, Risk, Event, NewsArticle)
-   - Query/Mutation 리졸버
-   - DataLoader 패턴으로 N+1 방지
-   - GraphQL Playground 인터페이스
+#### 1. 최적화된 쿼리 사용
+```python
+from src.queries.optimized import get_optimized_queries
 
-3. **고급 그래프 알고리즘**
-   - **중심성 분석**: Betweenness, PageRank, Degree, Eigenvector
-   - **커뮤니티 탐지**: Louvain, Risk Communities, Sector Clusters
-   - **경로 탐색**: 최단 경로, 리스크 전파 경로, 병목 분석
-   - **복원력 분석**: 장애 시나리오 시뮬레이션
-   - GDS 없이도 작동하는 폴백 구현
+# 기본 정보 조회 (캐시 지원, < 50ms)
+optimized_queries = get_optimized_queries()
+company_info = optimized_queries.get_company_basic_info("company-id")
 
-4. **모니터링 대시보드**
-   - 실시간 메트릭 수집 (시스템, 그래프, 성능, 리스크)
-   - 통합 헬스 체크 시스템
-   - 웹 기반 대시보드 (Chart.js)
-   - 알림 시스템
-   - 메트릭 히스토리 (24시간 보관)
+# 네트워크 리스크 분석 (< 100ms)
+network_risk = optimized_queries.calculate_network_risk_summary("company-id")
 
-### 다음 단계
-1. 다른 서비스와의 통합 테스트
-2. 부하 테스트 및 성능 최적화
-3. 프로덕션 배포 준비
-4. API 문서 자동 생성
+# 리스크 전파 경로 (< 200ms)
+risk_paths = optimized_queries.analyze_risk_propagation_paths("company-id", max_depth=3)
+```
+
+#### 2. 성능 튜닝 도구
+```python
+from src.queries.performance_tuning import get_performance_tuner
+
+# 인덱스 최적화
+performance_tuner = get_performance_tuner()
+performance_tuner.create_performance_indexes()
+
+# 쿼리 플랜 분석
+query_plan = performance_tuner.analyze_query_plan(query, parameters)
+
+# 성능 진단
+diagnostics = performance_tuner.run_performance_diagnostics()
+```
+
+#### 3. 캐시 관리
+```python
+from src.queries.optimized import get_optimized_queries
+
+optimized_queries = get_optimized_queries()
+
+# 캐시 워밍업
+company_ids = ["company-1", "company-2", "company-3"]
+optimized_queries.warm_up_cache(company_ids)
+
+# 캐시 통계 확인
+stats = optimized_queries.get_performance_stats()
+```
+
+### 테스트 가이드 🧪
+
+#### 성능 테스트
+```bash
+# 쿼리 벤치마크 (1-hop < 50ms, 3-hop < 200ms)
+python tests/performance/query_benchmark.py
+
+# 부하 테스트 (100+ 동시 쿼리)
+python tests/performance/load_test.py
+
+# 통합 테스트 (Sprint 1 요구사항 검증)
+pytest tests/integration/test_sprint1_requirements.py -v
+```
+
+#### API 테스트
+```bash
+# REST API 문서 확인
+curl http://localhost:8003/docs
+
+# GraphQL Playground
+curl http://localhost:8003/playground
+
+# 모니터링 대시보드
+curl http://localhost:8003/monitoring/dashboard
+```
 
 ## 📁 프로젝트 문서
 
