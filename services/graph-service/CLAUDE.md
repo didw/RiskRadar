@@ -24,24 +24,38 @@ graph-service/
 │   │   ├── network.py      # 네트워크 분석
 │   │   └── templates/      # 쿼리 템플릿
 │   ├── kafka/              # Kafka 연동
-│   │   ├── consumer.py
-│   │   └── handlers.py
+│   │   ├── consumer.py     # Kafka 컨슈머
+│   │   ├── handlers.py     # 메시지 핸들러
+│   │   ├── entity_cache.py # 엔티티 캐시 (N+1 문제 해결)
+│   │   └── batch_entity_matching.py # 배치 엔티티 매칭
 │   ├── graphql/            # GraphQL API
 │   │   ├── schema.py       # GraphQL 스키마
 │   │   ├── resolvers.py    # 리졸버
-│   │   └── types.py        # 타입 정의
-│   └── algorithms/         # 그래프 알고리즘
-│       ├── centrality.py   # 중심성 분석
-│       ├── community.py    # 커뮤니티 탐지
-│       └── pathfinding.py  # 경로 탐색
-├── scripts/                # 유틸리티 스크립트
-│   ├── init_db.py         # DB 초기화
-│   └── migrations/        # 스키마 마이그레이션
-├── tests/                 # 테스트
+│   │   ├── server.py       # GraphQL 서버
+│   │   └── dataloaders.py  # DataLoader 구현
+│   ├── algorithms/         # 그래프 알고리즘
+│   │   ├── centrality.py   # 중심성 분석
+│   │   ├── community.py    # 커뮤니티 탐지
+│   │   └── pathfinding.py  # 경로 탐색
+│   └── monitoring/         # 모니터링
+│       ├── metrics.py      # 메트릭 수집
+│       ├── health_check.py # 헬스 체크
+│       └── dashboard.py    # 대시보드 API
+├── docker/                 # Docker 설정
+│   └── neo4j-cluster/     # Neo4j 클러스터
+│       ├── docker-compose.cluster.yml
+│       ├── scripts/       # 클러스터 스크립트
+│       └── config/        # Neo4j 설정
+├── scripts/               # 유틸리티 스크립트
+│   ├── init_db.py        # DB 초기화
+│   └── migrations/       # 스키마 마이그레이션
+├── tests/                # 테스트
+│   ├── cluster/          # 클러스터 테스트
+│   └── test_*.py         # 단위 테스트
 ├── requirements.txt
 ├── Dockerfile
 ├── README.md
-├── CLAUDE.md             # 현재 파일
+├── CLAUDE.md            # 현재 파일
 └── CHANGELOG.md
 ```
 
@@ -483,15 +497,45 @@ CREATE INDEX company_name FOR (c:Company) ON (c.name)
 
 ### 🚨 긴급 수정 완료 ✅
 5. **N+1 쿼리 문제 해결**
-   - 엔티티 캐시 시스템 구현
-   - 배치 엔티티 매칭 도입
-   - 쿼리 수 95% 감소 (35번 → 2번)
-   - 처리 속도 3.5배 향상
+   - EntityCache 구현 (30분 TTL)
+   - BatchEntityMatching 알고리즘
+   - 쿼리 수 95% 감소 (35 → 2)
+   - 성능 3.5배 향상 (70ms → 20ms)
 
-### 다음 단계 (Week 3)
-1. Neo4j Enterprise 클러스터 구성
-2. GraphQL API 구현
-3. 모니터링 대시보드 설정
+### Sprint 1 Week 3 완료 사항 ✅
+1. **Neo4j Enterprise 클러스터 구성**
+   - 3-노드 Core 서버 + 1 Read Replica
+   - HAProxy 로드 밸런싱
+   - 자동 장애 복구 (Failover)
+   - 클러스터 설정 스크립트
+   - 포괄적인 클러스터 테스트
+
+2. **GraphQL API 구현**
+   - Strawberry 프레임워크 기반
+   - 전체 노드 타입 정의 (Company, Person, Risk, Event, NewsArticle)
+   - Query/Mutation 리졸버
+   - DataLoader 패턴으로 N+1 방지
+   - GraphQL Playground 인터페이스
+
+3. **고급 그래프 알고리즘**
+   - **중심성 분석**: Betweenness, PageRank, Degree, Eigenvector
+   - **커뮤니티 탐지**: Louvain, Risk Communities, Sector Clusters
+   - **경로 탐색**: 최단 경로, 리스크 전파 경로, 병목 분석
+   - **복원력 분석**: 장애 시나리오 시뮬레이션
+   - GDS 없이도 작동하는 폴백 구현
+
+4. **모니터링 대시보드**
+   - 실시간 메트릭 수집 (시스템, 그래프, 성능, 리스크)
+   - 통합 헬스 체크 시스템
+   - 웹 기반 대시보드 (Chart.js)
+   - 알림 시스템
+   - 메트릭 히스토리 (24시간 보관)
+
+### 다음 단계
+1. 다른 서비스와의 통합 테스트
+2. 부하 테스트 및 성능 최적화
+3. 프로덕션 배포 준비
+4. API 문서 자동 생성
 
 ## 📁 프로젝트 문서
 

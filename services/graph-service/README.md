@@ -13,6 +13,10 @@ Graph Service는 RiskRadar의 핵심인 Risk Knowledge Graph(RKG)를 관리합�
 - 🔄 **엔티티 매칭**: 중복 제거 및 통합 (N+1 문제 해결)
 - 💾 **트랜잭션 관리**: 안전한 데이터 일관성
 - ⚡ **고성능 캐싱**: 엔티티 캐시로 3.5배 성능 향상
+- 🌐 **GraphQL API**: 강력한 쿼리 인터페이스
+- 🧮 **그래프 알고리즘**: 중심성, 커뮤니티, 경로 분석
+- 📊 **모니터링 대시보드**: 실시간 성능 및 헬스 모니터링
+- 🔧 **고가용성**: Neo4j Enterprise 클러스터
 
 ## 🚀 빠른 시작
 
@@ -47,7 +51,7 @@ docker-compose up graph-service
 
 ### GraphQL Playground
 ```
-http://localhost:4000/graphql
+http://localhost:8003/playground
 ```
 
 ### 주요 쿼리
@@ -175,6 +179,44 @@ GET /api/v1/graph/cache/stats
 # 캐시 수동 새로고침
 POST /api/v1/graph/cache/refresh
 ```
+
+## 📊 모니터링 대시보드
+
+### 웹 대시보드 접속
+```
+http://localhost:8003/monitoring/dashboard
+```
+
+### 주요 메트릭
+- **시스템 메트릭**: CPU, 메모리, 디스크 사용률
+- **그래프 메트릭**: 노드/관계 수, 밀도, 평균 연결도
+- **성능 메트릭**: 평균 쿼리 시간, QPS, 캐시 히트율
+- **리스크 메트릭**: 평균 리스크 점수, 고위험 엔티티 수
+
+### 모니터링 API
+```bash
+# 메트릭 요약
+GET /monitoring/metrics/summary
+
+# 메트릭 히스토리
+GET /monitoring/metrics/history?metric=avg_query_time&hours=1
+
+# 활성 알림
+GET /monitoring/alerts?severity=HIGH
+```
+
+## 🏗️ Neo4j 클러스터
+
+### 클러스터 시작
+```bash
+cd docker/neo4j-cluster
+./scripts/cluster-setup.sh start
+```
+
+### 클러스터 구성
+- **Core Servers**: 3개 (자동 장애 복구)
+- **Read Replicas**: 1개 (읽기 성능 향상)
+- **HAProxy**: 로드 밸런싱
 
 ## 🔗 관련 문서
 

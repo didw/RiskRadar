@@ -1,5 +1,6 @@
 """Graph Service Main Application"""
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 import os
 import logging
@@ -15,6 +16,7 @@ from src.models.schemas import (
     NetworkAnalysisResponse
 )
 from src.kafka.entity_cache import entity_cache
+from src.graphql.server import get_graphql_router, GRAPHQL_PLAYGROUND_HTML
 
 # 로깅 설정
 logging.basicConfig(
@@ -59,52 +61,56 @@ async def lifespan(app: FastAPI):
 
 # FastAPI 앱 생성
 app = FastAPI(
-    title=os.getenv("API_TITLE", "Graph Service API"),
+    title=os.getenv("API_TITLE", "RiskRadar Graph Service API"),
     version=os.getenv("API_VERSION", "1.0.0"),
+    description="Neo4j 기반 Risk Knowledge Graph 서비스",
     lifespan=lifespan
 )
+
+# GraphQL 라우터 추가
+graphql_router = get_graphql_router()
+app.include_router(graphql_router, prefix="/graphql")
+
+# 모니터링 대시보드 라우터 추가
+from src.monitoring.dashboard import get_monitoring_router
+monitoring_router = get_monitoring_router()
+app.include_router(monitoring_router)
+
+@app.get("/playground", response_class=HTMLResponse)
+async def graphql_playground():
+    """GraphQL Playground 인터페이스"""
+    return GRAPHQL_PLAYGROUND_HTML
 
 @app.get("/health")
 async def health_check():
     """헬스 체크 엔드포인트"""
-    neo4j_status = "connected"
-    neo4j_error = None
+    from src.monitoring.health_check import health_checker, HealthStatus
     
     try:
-        # Neo4j 연결 상태 확인 (최대 5초 대기)
-        import time
-        start_time = time.time()
-        neo4j_driver.driver.verify_connectivity()
-        response_time = (time.time() - start_time) * 1000  # ms
+        # 통합 헬스 체크 사용
+        health_status = await health_checker.get_health_status()
+        
+        # 상태에 따른 HTTP 응답 코드 결정
+        status = health_status.get("status", HealthStatus.UNKNOWN)
+        
+        if status == HealthStatus.CRITICAL:
+            raise HTTPException(status_code=503, detail=health_status)
+        elif status == HealthStatus.DEGRADED:
+            # Degraded는 200을 반환하되 상태를 명시
+            return health_status
+        else:
+            return health_status
+            
+    except HTTPException:
+        raise
     except Exception as e:
-        neo4j_status = "disconnected"
-        neo4j_error = str(e)
-        response_time = None
-    
-    # 전체 서비스 상태 결정
-    overall_status = "healthy" if neo4j_status == "connected" else "degraded"
-    
-    health_response = {
-        "status": overall_status,
-        "service": "graph-service",
-        "timestamp": datetime.now().isoformat(),
-        "components": {
-            "neo4j": {
-                "status": neo4j_status,
-                "response_time_ms": response_time,
-                "error": neo4j_error
-            },
-            "kafka_consumer": {
-                "status": "running" if kafka_consumer.running else "stopped"
-            }
+        logger.error(f"Error in health check: {e}")
+        error_response = {
+            "status": HealthStatus.UNKNOWN,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
         }
-    }
-    
-    # 서비스가 degraded 상태면 503 반환
-    if overall_status == "degraded":
-        raise HTTPException(status_code=503, detail=health_response)
-    
-    return health_response
+        raise HTTPException(status_code=503, detail=error_response)
 
 @app.get("/api/v1/graph/stats", response_model=GraphStatsResponse)
 async def get_graph_stats():

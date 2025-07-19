@@ -3,6 +3,102 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-07-19
+
+### Sprint 1 Week 3 완료
+
+#### 🚀 Added
+
+##### Neo4j Enterprise 클러스터
+- **고가용성 클러스터 구성**
+  - 3개 Core 서버 + 1개 Read Replica
+  - HAProxy 로드 밸런싱
+  - 자동 장애 복구 (Failover)
+  - Prometheus 메트릭 엔드포인트
+- **클러스터 관리 도구**
+  - 자동 설정 스크립트 (`cluster-setup.sh`)
+  - 헬스 체크 및 모니터링
+  - 백업/복구 스크립트
+- **포괄적인 클러스터 테스트**
+  - 장애 복구 시나리오
+  - 읽기/쓰기 일관성
+  - 로드 밸런싱 검증
+
+##### GraphQL API
+- **Strawberry 프레임워크 기반 구현**
+  - 전체 노드 타입 정의 (Company, Person, Risk, Event, NewsArticle)
+  - Query/Mutation 리졸버
+  - 필터링 및 페이지네이션
+  - Union 타입 및 인터페이스
+- **DataLoader 패턴**
+  - N+1 쿼리 방지
+  - 배치 데이터 로딩
+  - 관계별 전용 로더
+- **GraphQL Playground**
+  - 인터랙티브 쿼리 에디터
+  - 스키마 문서화
+  - 실시간 쿼리 테스트
+
+##### 고급 그래프 알고리즘
+- **중심성 분석 (`centrality.py`)**
+  - Betweenness Centrality
+  - PageRank
+  - Degree Centrality
+  - Eigenvector Centrality
+  - 영향력 있는 노드 탐지
+- **커뮤니티 탐지 (`community.py`)**
+  - Louvain 알고리즘
+  - 리스크 기반 커뮤니티
+  - 섹터별 클러스터
+  - 커뮤니티 리스크 분석
+- **경로 탐색 (`pathfinding.py`)**
+  - 최단 경로 알고리즘
+  - 리스크 전파 경로
+  - 병목 노드 분석
+  - 경로 복원력 계산
+  - 대안 경로 탐색
+- **폴백 구현**
+  - Graph Data Science 없이도 작동
+  - 근사 알고리즘 제공
+
+##### 모니터링 대시보드
+- **실시간 메트릭 수집**
+  - 시스템 메트릭 (CPU, 메모리, 디스크)
+  - 그래프 메트릭 (노드/관계 수, 밀도)
+  - 성능 메트릭 (쿼리 시간, QPS, 캐시 히트율)
+  - 리스크 메트릭 (평균 점수, 분포)
+- **웹 기반 대시보드**
+  - Chart.js 기반 실시간 차트
+  - 30초 자동 새로고침
+  - 성능 트렌드 시각화
+  - 리스크 분포 도넛 차트
+- **통합 헬스 체크**
+  - 컴포넌트별 상태 확인
+  - 전체 서비스 상태 결정
+  - 응답 시간 측정
+- **알림 시스템**
+  - 임계값 기반 알림
+  - 심각도별 필터링
+  - REST API 제공
+- **메트릭 히스토리**
+  - 24시간 데이터 보관
+  - 시계열 쿼리 지원
+
+#### 🔧 Improved
+- **main.py 통합**
+  - GraphQL 라우터 추가
+  - 모니터링 라우터 추가
+  - 통합 헬스 체크 사용
+- **의존성 업데이트**
+  - strawberry-graphql 추가
+  - aiodataloader 추가
+  - psutil 추가 (시스템 메트릭)
+
+#### 📝 Documentation
+- 클러스터 README 추가
+- 알고리즘 상세 문서화
+- 모니터링 가이드 추가
+
 ## [0.3.2] - 2025-07-19
 
 ### 통합 테스트 수정
