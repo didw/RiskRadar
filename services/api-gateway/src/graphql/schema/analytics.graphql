@@ -30,7 +30,7 @@ type CompanyAnalytics {
   sentimentAnalysis: CompanySentimentAnalysis!
   competitorComparison: [CompetitorMetric!]!
   marketShare: MarketShareData
-  keyRiskFactors: [RiskFactor!]!
+  keyRiskFactors: [AnalyticsRiskFactor!]!
 }
 
 type NewsVolumeMetric {
@@ -105,7 +105,7 @@ type CompanyMarketPosition {
   rank: Int!
 }
 
-type RiskFactor {
+type AnalyticsRiskFactor {
   factor: String!
   impact: RiskImpact!
   likelihood: Float!
@@ -337,7 +337,7 @@ extend type Query {
     companies: [ID!]
     timeRange: TimeRangeInput
     categories: [String!]
-  ): [RiskFactor!]!
+  ): [AnalyticsRiskFactor!]!
 }
 
 # Real-time analytics subscriptions

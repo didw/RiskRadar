@@ -5,6 +5,7 @@ import asyncio
 import logging
 import signal
 import sys
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -28,12 +29,23 @@ consumer = None
 producer = None
 pipeline = None
 consumer_task = None
+consumer_thread = None
+
+
+def run_consumer_thread():
+    """Run consumer in a separate thread"""
+    global consumer
+    if consumer:
+        try:
+            consumer.consume_messages_sync()
+        except Exception as e:
+            logger.error(f"Consumer thread error: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
-    global consumer, producer, pipeline, consumer_task
+    global consumer, producer, pipeline, consumer_task, consumer_thread
     
     settings = get_settings()
     logger.info(f"Starting {settings.service_name} v{settings.service_version}")
@@ -73,25 +85,25 @@ async def lifespan(app: FastAPI):
         consumer.set_pipeline(pipeline)
         consumer.set_producer(producer)
         
-        # Start consumer task
-        consumer_task = asyncio.create_task(consumer.consume_messages())
-        logger.info("Kafka consumer started")
+        # Start consumer in a separate thread
+        consumer_thread = threading.Thread(target=run_consumer_thread, daemon=True)
+        consumer_thread.start()
+        logger.info("Kafka consumer thread started")
         
     except Exception as e:
         logger.error(f"Failed to initialize service: {e}")
         raise
         
+    # Let the startup complete
+    logger.info("Service startup complete")
     yield
     
     # Cleanup
     logger.info("Shutting down service...")
     
-    if consumer_task:
-        consumer_task.cancel()
-        try:
-            await consumer_task
-        except asyncio.CancelledError:
-            pass
+    if consumer_thread and consumer_thread.is_alive():
+        logger.info("Stopping consumer thread...")
+        # Consumer will exit on its own when the process terminates
             
     if consumer:
         consumer.close()

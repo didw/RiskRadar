@@ -116,28 +116,84 @@ class MLConsumer:
             raise
             
     async def consume_messages(self):
-        """Main consumption loop"""
+        """Main consumption loop - non-blocking version"""
         if not self.consumer:
             raise RuntimeError("Consumer not connected. Call connect() first.")
             
         logger.info("Starting message consumption...")
         
         try:
+            while True:
+                # Poll for messages with a timeout (non-blocking)
+                messages = self.consumer.poll(timeout_ms=1000)
+                if not messages:
+                    # No messages, yield control
+                    await asyncio.sleep(0.1)
+                    continue
+                    
+                for topic_partition, records in messages.items():
+                    for message in records:
+                        try:
+                            # Process message
+                            enriched = await self.process_message(message.value)
+                            
+                            # Send to enriched-news topic via producer  
+                            logger.info(f"Producer status: {self.producer is not None}")
+                            if self.producer:
+                                try:
+                                    logger.info(f"Attempting to send enriched message for: {message.value.get('id')}")
+                                    await self.producer.send_enriched(enriched)
+                                    logger.info(f"Successfully processed and sent message: {message.value.get('id')}")
+                                except Exception as e:
+                                    logger.error(f"Failed to send enriched message: {e}")
+                                    logger.info(f"Successfully processed message (send failed): {message.value.get('id')}")
+                            else:
+                                logger.warning(f"No producer available, processed message: {message.value.get('id')}")
+                            
+                        except Exception as e:
+                            logger.error(f"Failed to process message: {e}")
+                            # TODO: Send to DLQ (Dead Letter Queue)
+                    
+        except asyncio.CancelledError:
+            logger.info("Consumer task cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"Error in consumer loop: {e}")
+            raise
+        finally:
+            self.close()
+            
+    def close(self):
+        """Close consumer connection"""
+        if self.consumer:
+            self.consumer.close()
+            logger.info("Consumer connection closed")
+            
+    def consume_messages_sync(self):
+        """Synchronous consumption loop for threading"""
+        if not self.consumer:
+            raise RuntimeError("Consumer not connected. Call connect() first.")
+            
+        logger.info("Starting synchronous message consumption...")
+        
+        try:
             for message in self.consumer:
                 try:
-                    # Process message
-                    enriched = await self.process_message(message.value)
+                    # Create event loop for async processing
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
                     
-                    # Send to enriched-news topic via producer  
-                    logger.info(f"Producer status: {self.producer is not None}")
+                    # Process message
+                    enriched = loop.run_until_complete(self.process_message(message.value))
+                    
+                    # Send to enriched-news topic via producer
                     if self.producer:
                         try:
                             logger.info(f"Attempting to send enriched message for: {message.value.get('id')}")
-                            await self.producer.send_enriched(enriched)
+                            loop.run_until_complete(self.producer.send_enriched(enriched))
                             logger.info(f"Successfully processed and sent message: {message.value.get('id')}")
                         except Exception as e:
                             logger.error(f"Failed to send enriched message: {e}")
-                            logger.info(f"Successfully processed message (send failed): {message.value.get('id')}")
                     else:
                         logger.warning(f"No producer available, processed message: {message.value.get('id')}")
                     
@@ -149,12 +205,6 @@ class MLConsumer:
             logger.info("Shutting down consumer...")
         finally:
             self.close()
-            
-    def close(self):
-        """Close consumer connection"""
-        if self.consumer:
-            self.consumer.close()
-            logger.info("Consumer connection closed")
 
 
 class MockKafkaConsumer(MLConsumer):

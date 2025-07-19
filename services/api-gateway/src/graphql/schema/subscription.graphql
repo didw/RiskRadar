@@ -64,10 +64,10 @@ type RiskScoreUpdate {
   currentScore: Float!
   changePercentage: Float!
   timestamp: String!
-  factors: [RiskFactor!]!
+  factors: [SubscriptionRiskFactor!]!
 }
 
-type RiskFactor {
+type SubscriptionRiskFactor {
   type: String!
   impact: Float!
   confidence: Float!
