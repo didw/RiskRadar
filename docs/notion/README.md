@@ -24,12 +24,13 @@
 - [08_ML_Squad_가이드.md](08_ML_Squad_가이드.md) - ML/NLP팀 전용 가이드
 - [09_Graph_Squad_가이드.md](09_Graph_Squad_가이드.md) - 그래프팀 전용 가이드
 - [10_Product_Squad_가이드.md](10_Product_Squad_가이드.md) - 프로덕트팀 전용 가이드
+- [11_API_Gateway_Squad_가이드.md](11_API_Gateway_Squad_가이드.md) - API Gateway팀 전용 가이드
 
 ### 5. 상세 설계 문서
-- [11_3개월_마일스톤_상세계획.md](11_3개월_마일스톤_상세계획.md) - 단계적 마일스톤 설계
-- [12_그래프DB_설계_상세안.md](12_그래프DB_설계_상세안.md) - Risk Knowledge Graph 설계
-- [13_기술스택_선정_근거.md](13_기술스택_선정_근거.md) - 기술 선택 이유 및 아키텍처
-- [14_앞으로_해야할_일_정리.md](14_앞으로_해야할_일_정리.md) - 향후 작업 종합 정리
+- [12_3개월_마일스톤_상세계획.md](12_3개월_마일스톤_상세계획.md) - 단계적 마일스톤 설계
+- [13_그래프DB_설계_상세안.md](13_그래프DB_설계_상세안.md) - Risk Knowledge Graph 설계
+- [14_기술스택_선정_근거.md](14_기술스택_선정_근거.md) - 기술 선택 이유 및 아키텍처
+- [15_앞으로_해야할_일_정리.md](15_앞으로_해야할_일_정리.md) - 향후 작업 종합 정리
 
 ## 🚀 Notion 활용법
 
@@ -51,7 +52,8 @@
     ├── Data Squad 가이드
     ├── ML Squad 가이드
     ├── Graph Squad 가이드
-    └── Product Squad 가이드
+    ├── Product Squad 가이드
+    └── API Gateway Squad 가이드
 ```
 
 ### 3. 업데이트 주기
