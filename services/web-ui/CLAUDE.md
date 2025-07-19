@@ -47,8 +47,11 @@ web-ui/
 │   │   └── auth-store.ts
 │   ├── graphql/             # GraphQL 쿼리/뮤테이션
 │   │   ├── queries/
+│   │   │   ├── risk.ts      # 리스크 관련 쿼리
+│   │   │   └── company.ts   # 기업 관련 쿼리
 │   │   ├── mutations/
-│   │   └── subscriptions/
+│   │   │   └── index.ts     # 뮤테이션 정의
+│   │   └── types.ts         # GraphQL 타입 정의
 │   ├── types/               # TypeScript 타입
 │   │   └── auth.ts
 │   └── styles/              # 스타일 관련
@@ -666,50 +669,143 @@ const HeavyComponent = lazy(() => import('./HeavyComponent'));
 ### 개발 우선순위
 1. 기본 대시보드 UI ✅
 2. 반응형 레이아웃 ✅
-3. 실시간 데이터 업데이트
+3. 실시간 데이터 업데이트 ✅
+4. GraphQL 통합 ✅
+5. 성능 최적화 ✅
 
-## 📅 Sprint 1 - Week 3 구현 내역
+## 📋 개발 가이드라인
 
-### 구현된 컴포넌트
+### 아키텍처 원칙
+
+#### 1. 컴포넌트 구조
+- **UI 컴포넌트**: `components/ui/` - 재사용 가능한 기본 컴포넌트
+- **도메인 컴포넌트**: `components/dashboard/`, `components/charts/` - 비즈니스 로직이 포함된 컴포넌트
+- **레이아웃 컴포넌트**: `components/layout/` - 페이지 레이아웃
+
+#### 2. 데이터 흐름
 ```typescript
-// 리스크 요약 카드
-components/dashboard/risk-summary-card.tsx
-components/dashboard/risk-metrics.tsx
-components/dashboard/risk-metrics-graphql.tsx
+// GraphQL 쿼리 우선, 에러 시 Mock 데이터 fallback
+const { data, loading, error } = useQuery(GET_RISK_DATA);
 
-// 기업 목록 테이블
-components/dashboard/enhanced-company-list.tsx
-components/dashboard/enhanced-company-list-graphql.tsx
-components/dashboard/company-filters.tsx
-components/dashboard/empty-state.tsx
-components/dashboard/date-range-filter.tsx
-
-// 차트 컴포넌트
-components/charts/risk-overview-chart.tsx
-components/charts/risk-overview-chart-graphql.tsx
-components/charts/risk-distribution-chart.tsx
-
-// UI 컴포넌트
-components/ui/table.tsx
-components/ui/popover.tsx
-components/ui/calendar.tsx
-
-// GraphQL 정의
-graphql/queries/risk.ts
-graphql/queries/company.ts
-graphql/mutations/index.ts
-graphql/types.ts
-
-// 테스트 파일
-components/dashboard/__tests__/risk-summary-card.test.tsx
+if (error) {
+  // Mock 데이터로 fallback
+  return <ComponentWithMockData />;
+}
 ```
 
-### 주요 기능
-- ✅ 다양한 변형을 지원하는 리스크 요약 카드
-- ✅ 정렬, 필터, 검색이 가능한 기업 목록 테이블
-- ✅ Line/Area/Pie/Bar 차트 구현
-- ✅ 산업별, 리스크 레벨별 필터링
-- ✅ GraphQL 쿼리 및 타입 정의
+#### 3. 성능 최적화
+- 동적 임포트로 코드 스플리팅
+- React.memo()로 불필요한 리렌더링 방지
+- Apollo Client 캐싱 활용
+
+### 코딩 규칙
+
+#### 1. GraphQL 통합
+```typescript
+// Apollo Client 설정
+const apolloClient = new ApolloClient({
+  link: splitLink, // HTTP + WebSocket
+  cache: new InMemoryCache({
+    typePolicies: {
+      Company: { keyFields: ['id'] },
+    },
+  }),
+});
+
+// 실시간 구독 사용
+const { data } = useSubscription(RISK_UPDATE_SUBSCRIPTION);
+```
+
+#### 2. 모바일 우선 반응형 디자인
+```typescript
+// Tailwind CSS 반응형 클래스 사용
+<div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+  {/* 모바일: 1열, 태블릿: 2열, 데스크톱: 4열 */}
+</div>
+
+// 모바일 전용 컴포넌트
+<div className="md:hidden">
+  <MobileSidebar />
+</div>
+```
+
+#### 3. 에러 처리 및 로딩 상태
+```typescript
+if (loading) return <Skeleton className="w-full h-[300px]" />;
+if (error) {
+  console.error("GraphQL Error:", error);
+  return <FallbackComponent />;
+}
+```
+
+#### 4. 타입 안전성
+```typescript
+// GraphQL 타입 정의
+interface CompanyRiskFilter {
+  industries?: string[];
+  riskLevels?: string[];
+  searchTerm?: string;
+}
+
+// 컴포넌트 Props 타입
+interface RiskSummaryCardProps {
+  title: string;
+  value: string | number;
+  variant?: "default" | "danger" | "warning" | "success";
+}
+```
+
+### 테스트 전략
+
+#### 1. 컴포넌트 테스트
+```typescript
+// Jest + React Testing Library
+describe('RiskSummaryCard', () => {
+  it('renders with required props', () => {
+    render(<RiskSummaryCard title="Test" value="100" />);
+    expect(screen.getByText('Test')).toBeInTheDocument();
+  });
+});
+```
+
+#### 2. GraphQL 테스트
+```typescript
+// Apollo Client MockedProvider 사용
+const mocks = [
+  {
+    request: { query: GET_RISK_DATA },
+    result: { data: { riskData: mockData } },
+  },
+];
+```
+
+### PWA 최적화
+
+#### 1. Service Worker
+```javascript
+// 캐시 전략
+const CACHE_NAME = 'riskradar-v1';
+const urlsToCache = ['/', '/offline'];
+
+// 오프라인 지원
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+      .catch(() => caches.match('/offline'))
+  );
+});
+```
+
+#### 2. 매니페스트 설정
+```json
+{
+  "name": "RiskRadar",
+  "display": "standalone",
+  "start_url": "/",
+  "theme_color": "#3B82F6"
+}
+```
 
 ## 📁 프로젝트 문서
 

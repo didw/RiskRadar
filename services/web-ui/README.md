@@ -39,15 +39,34 @@ open http://localhost:3000
 
 ## 🎨 기술 스택
 
+### Core
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **State**: Zustand
-- **API**: Apollo Client (GraphQL)
-- **Charts**: Recharts
-- **Auth**: JWT + Middleware
-- **Testing**: Jest, React Testing Library
+- **State Management**: Zustand
+
+### API & Data
+- **GraphQL Client**: Apollo Client (HTTP + WebSocket)
+- **Real-time**: GraphQL Subscriptions
+- **Authentication**: JWT + Next.js Middleware
+
+### UI & Visualization
+- **Component Library**: shadcn/ui + Radix UI
+- **Charts**: Recharts (Line, Area, Pie, Bar)
+- **Icons**: Lucide React
+- **Mobile**: Responsive Design + Sheet Components
+
+### Performance & PWA
+- **Code Splitting**: Dynamic Imports
+- **Image Optimization**: Next.js Image
+- **Caching**: Apollo Client + Service Worker
+- **Offline Support**: PWA with Manifest
+
+### Testing & Tools
+- **Testing**: Jest + React Testing Library
+- **Bundle Analysis**: Webpack Bundle Analyzer
+- **Linting**: ESLint + Prettier
+- **Type Checking**: TypeScript
 
 ## 📅 Sprint 1 진행 상황
 
@@ -83,21 +102,21 @@ open http://localhost:3000
 ## 📱 주요 화면
 
 ### 대시보드
-- 전체 리스크 현황
-- 고위험 기업 목록
-- 최근 알림
-- 주요 지표
+- **리스크 요약 카드**: 전체 모니터링 기업, 고위험 기업, 신규 리스크, 평균 리스크 점수
+- **리스크 차트**: Line/Area 차트로 30일간 리스크 추이 시각화
+- **리스크 분포**: Pie/Bar 차트로 리스크 레벨 및 산업별 분포
+- **기업 목록**: 정렬, 필터, 검색이 가능한 실시간 기업 리스트
+- **뉴스 타임라인**: 실시간 뉴스 업데이트 및 감성 분석
 
-### 기업 상세
-- 리스크 점수 추이
-- 연관 기업 네트워크
-- 최근 뉴스 분석
-- AI 인사이트
+### 반응형 디자인
+- **데스크톱**: 사이드바 네비게이션 + 멀티 컬럼 레이아웃
+- **태블릿**: 최적화된 그리드 레이아웃
+- **모바일**: 햄버거 메뉴 + 스택형 레이아웃
 
-### 리포트
-- 일일 브리핑
-- 주간 리포트
-- 맞춤형 분석
+### PWA 기능
+- **오프라인 지원**: Service Worker로 캐싱
+- **홈 스크린 추가**: 네이티브 앱처럼 설치 가능
+- **푸시 알림**: 중요 리스크 업데이트 (예정)
 
 ## 🧪 테스트
 
