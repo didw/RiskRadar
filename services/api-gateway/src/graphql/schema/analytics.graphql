@@ -1,0 +1,369 @@
+# Advanced Analytics Schema
+# Complex queries for business intelligence and insights
+
+type RiskTrend {
+  date: DateTime!
+  averageRiskScore: Float!
+  articleCount: Int!
+  topRiskCategories: [RiskCategoryMetric!]!
+  sentimentDistribution: SentimentDistribution!
+}
+
+type RiskCategoryMetric {
+  category: String!
+  score: Float!
+  count: Int!
+  trend: Float!  # percentage change from previous period
+}
+
+type SentimentDistribution {
+  positive: Float!
+  neutral: Float!
+  negative: Float!
+  total: Int!
+}
+
+type CompanyAnalytics {
+  company: Company!
+  riskTrend: [RiskTrend!]!
+  newsVolume: [NewsVolumeMetric!]!
+  sentimentAnalysis: CompanySentimentAnalysis!
+  competitorComparison: [CompetitorMetric!]!
+  marketShare: MarketShareData
+  keyRiskFactors: [RiskFactor!]!
+}
+
+type NewsVolumeMetric {
+  date: DateTime!
+  count: Int!
+  sources: [SourceMetric!]!
+}
+
+type SourceMetric {
+  source: String!
+  count: Int!
+  averageSentiment: Float!
+}
+
+type CompanySentimentAnalysis {
+  overall: SentimentScore!
+  bySource: [SourceSentiment!]!
+  byTimeframe: [TimeSentiment!]!
+  trends: SentimentTrend!
+}
+
+type SentimentScore {
+  label: String!
+  score: Float!
+  confidence: Float!
+}
+
+type SourceSentiment {
+  source: String!
+  sentiment: SentimentScore!
+  articleCount: Int!
+}
+
+type TimeSentiment {
+  timeframe: String!
+  sentiment: SentimentScore!
+  articleCount: Int!
+}
+
+type SentimentTrend {
+  direction: TrendDirection!
+  magnitude: Float!
+  significance: Float!
+  timespan: String!
+}
+
+enum TrendDirection {
+  IMPROVING
+  DECLINING
+  STABLE
+  VOLATILE
+}
+
+type CompetitorMetric {
+  competitor: Company!
+  riskScoreComparison: Float!  # relative to main company
+  newsVolumeRatio: Float!
+  sentimentComparison: Float!
+  marketPosition: String
+}
+
+type MarketShareData {
+  percentage: Float
+  rank: Int
+  industry: String!
+  competitors: [CompanyMarketPosition!]!
+}
+
+type CompanyMarketPosition {
+  company: Company!
+  marketShare: Float
+  rank: Int!
+}
+
+type RiskFactor {
+  factor: String!
+  impact: RiskImpact!
+  likelihood: Float!
+  description: String!
+  relatedNews: [NewsArticle!]!
+  trend: TrendDirection!
+}
+
+enum RiskImpact {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  MINIMAL
+}
+
+type IndustryAnalytics {
+  industry: String!
+  averageRiskScore: Float!
+  totalCompanies: Int!
+  newsVolume: Int!
+  topCompanies: [Company!]!
+  riskDistribution: [RiskDistributionBucket!]!
+  emergingRisks: [EmergingRisk!]!
+  sentimentOverview: SentimentDistribution!
+}
+
+type RiskDistributionBucket {
+  range: String!
+  count: Int!
+  percentage: Float!
+}
+
+type EmergingRisk {
+  risk: String!
+  description: String!
+  impactedCompanies: [Company!]!
+  firstDetected: DateTime!
+  frequency: Int!
+  severity: RiskImpact!
+}
+
+type CrossCompanyInsight {
+  insight: String!
+  type: InsightType!
+  confidence: Float!
+  impactedCompanies: [Company!]!
+  relatedNews: [NewsArticle!]!
+  timeframe: String!
+  significance: Float!
+}
+
+enum InsightType {
+  MARKET_TREND
+  SUPPLY_CHAIN
+  REGULATORY_CHANGE
+  FINANCIAL_PATTERN
+  COMPETITIVE_SHIFT
+  ESG_CONCERN
+}
+
+type NetworkAnalysis {
+  centralCompanies: [CompanyInfluence!]!
+  riskClusters: [RiskCluster!]!
+  supplyChainRisks: [SupplyChainRisk!]!
+  industryConnections: [IndustryConnection!]!
+}
+
+type CompanyInfluence {
+  company: Company!
+  influenceScore: Float!
+  connections: Int!
+  riskPropagation: Float!
+}
+
+type RiskCluster {
+  id: ID!
+  companies: [Company!]!
+  sharedRisks: [String!]!
+  clusterRiskScore: Float!
+  description: String!
+}
+
+type SupplyChainRisk {
+  supplier: Company!
+  client: Company!
+  riskLevel: RiskImpact!
+  vulnerabilities: [String!]!
+  mitigationScore: Float!
+}
+
+type IndustryConnection {
+  sourceIndustry: String!
+  targetIndustry: String!
+  connectionStrength: Float!
+  riskCorrelation: Float!
+  keyConnectors: [Company!]!
+}
+
+# Advanced Search and Aggregation
+type SearchResult {
+  companies: [Company!]!
+  news: [NewsArticle!]!
+  insights: [CrossCompanyInsight!]!
+  totalResults: Int!
+  searchTime: Float!
+  suggestions: [String!]!
+}
+
+type TimeSeriesData {
+  timestamp: DateTime!
+  value: Float!
+  metadata: JSONObject
+}
+
+scalar JSONObject
+
+# Complex filtering inputs
+input AdvancedCompanyFilter {
+  industries: [String!]
+  riskScoreRange: RangeInput
+  marketCapRange: RangeInput
+  employeeRange: RangeInput
+  foundedRange: RangeInput
+  regions: [String!]
+  hasRecentNews: Boolean
+  sentimentRange: RangeInput
+  newsVolumeRange: RangeInput
+}
+
+input RangeInput {
+  min: Float
+  max: Float
+}
+
+input TimeRangeInput {
+  from: DateTime!
+  to: DateTime!
+  granularity: TimeGranularity
+}
+
+enum TimeGranularity {
+  HOUR
+  DAY
+  WEEK
+  MONTH
+  QUARTER
+  YEAR
+}
+
+input AnalyticsFilter {
+  timeRange: TimeRangeInput!
+  companies: [ID!]
+  industries: [String!]
+  riskCategories: [String!]
+  sources: [String!]
+  minimumConfidence: Float
+}
+
+# Extended Query Types
+extend type Query {
+  # Company Analytics
+  companyAnalytics(
+    companyId: ID!
+    timeRange: TimeRangeInput!
+    includeCompetitors: Boolean = false
+  ): CompanyAnalytics!
+  
+  # Industry Analysis
+  industryAnalytics(
+    industry: String!
+    timeRange: TimeRangeInput
+    limit: Int = 50
+  ): IndustryAnalytics!
+  
+  # Cross-company insights
+  crossCompanyInsights(
+    filter: AnalyticsFilter!
+    limit: Int = 20
+  ): [CrossCompanyInsight!]!
+  
+  # Network analysis
+  networkAnalysis(
+    companies: [ID!]
+    maxDegrees: Int = 2
+  ): NetworkAnalysis!
+  
+  # Advanced search
+  advancedSearch(
+    query: String!
+    filters: AdvancedCompanyFilter
+    timeRange: TimeRangeInput
+    limit: Int = 50
+    includeNews: Boolean = true
+    includeInsights: Boolean = true
+  ): SearchResult!
+  
+  # Risk analysis
+  riskTrendAnalysis(
+    companyIds: [ID!]
+    timeRange: TimeRangeInput!
+    granularity: TimeGranularity = DAY
+  ): [RiskTrend!]!
+  
+  # Comparative analysis
+  compareCompanies(
+    companyIds: [ID!]!
+    metrics: [String!]!
+    timeRange: TimeRangeInput
+  ): JSONObject!
+  
+  # Time series data
+  timeSeriesData(
+    metric: String!
+    entities: [ID!]!
+    timeRange: TimeRangeInput!
+    granularity: TimeGranularity = DAY
+  ): [TimeSeriesData!]!
+  
+  # Market sentiment aggregation
+  marketSentiment(
+    industry: String
+    timeRange: TimeRangeInput
+    granularity: TimeGranularity = DAY
+  ): [SentimentDistribution!]!
+  
+  # Risk factor analysis
+  riskFactorAnalysis(
+    companies: [ID!]
+    timeRange: TimeRangeInput
+    categories: [String!]
+  ): [RiskFactor!]!
+}
+
+# Real-time analytics subscriptions
+extend type Subscription {
+  # Real-time risk score changes
+  riskScoreUpdates(
+    companyIds: [ID!]!
+    threshold: Float = 0.1
+  ): CompanyAnalytics!
+  
+  # Market sentiment changes
+  marketSentimentUpdates(
+    industries: [String!]
+    significanceThreshold: Float = 0.05
+  ): SentimentDistribution!
+  
+  # Emerging risk alerts
+  emergingRiskAlerts(
+    companies: [ID!]
+    severityThreshold: RiskImpact = MEDIUM
+  ): EmergingRisk!
+  
+  # Cross-company insights
+  insightUpdates(
+    industries: [String!]
+    types: [InsightType!]
+    confidenceThreshold: Float = 0.7
+  ): CrossCompanyInsight!
+}

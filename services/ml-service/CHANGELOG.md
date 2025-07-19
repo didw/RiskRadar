@@ -92,6 +92,87 @@
 
 ## [Unreleased]
 
+### 🚀 Planned (Week 4+)
+- 실시간 감정 분석 스트림 처리
+- 리스크 예측 모델 고도화
+- 도메인 특화 키워드 추출
+- 자동 모델 재학습 파이프라인
+
+## [1.4.0] - 2025-07-19
+
+### Sprint 1 Week 3: Enhanced Sentiment & Risk Analysis
+
+#### 🧠 Major Enhancement
+- **향상된 감정 분석 시스템**: 한국어 비즈니스 도메인 특화 분석기 구현
+- **다중 팩터 리스크 분석**: 종합적인 리스크 평가 모델 완성
+- **엔티티 컨텍스트 통합**: 엔티티 기반 감정/리스크 조정 시스템
+
+#### 🚀 Added
+- **Enhanced Korean Business Sentiment Analyzer**
+  - 다중 카테고리 지표 분석 (성장/성공/문제/금융위험)
+  - 강화/약화 수식어 처리 ("대폭", "크게", "소폭" 등)
+  - 부정 표현 핸들링 및 문맥 분석
+  - 엔티티 기반 감정 조정 시스템
+  - 신뢰도 점수 및 상세 분석 결과 제공
+
+- **Enhanced Multi-factor Risk Analyzer**
+  - 5가지 리스크 카테고리 분석 (금융/운영/법적/시장/ESG)
+  - 이벤트 심각도 자동 검출
+  - 리스크 트렌드 및 예측 기능
+  - 엔티티 및 감정 통합 리스크 조정
+  - 상세한 리스크 요약 보고서 생성
+
+- **Context-Aware Processing Pipeline**
+  - 엔티티 컨텍스트 기반 감정 분석 강화
+  - 다중 모델 결과 통합 및 조정
+  - 강화된 전처리 파이프라인
+  - 도메인 특화 어휘 사전 확장
+
+#### 📊 Enhanced Output Schema
+- **Sentiment Analysis Enhancement**
+  - 기본 label/score/confidence에 추가:
+  - breakdown: 긍정/부정 지표 상세 분석
+  - intensifiers: 강화/약화 수식어 목록
+  - negations: 부정 표현 감지
+  - entity_adjusted: 엔티티 기반 조정 여부
+
+- **Risk Analysis Enhancement**
+  - overall_risk_score: 종합 리스크 점수
+  - risk_level: 리스크 수준 (LOW/MEDIUM/HIGH/CRITICAL)
+  - category_scores: 5가지 카테고리별 점수
+  - detected_events: 감지된 리스크 이벤트 목록
+  - risk_summary: 리스크 분석 요약
+
+#### 🔧 Performance Improvements
+- **Processing Pipeline Optimization**
+  - 엔티티 기반 감정 조정으로 정확도 향상
+  - 다중 팩터 리스크 분석으로 포괄성 증대
+  - 메모리 효율적인 대용량 어휘 사전 처리
+  - 캐싱 시스템 확장 (감정/리스크 결과)
+
+#### 🧪 Testing & Validation
+- **Enhanced Test Cases**
+  - 한국어 비즈니스 도메인 특화 테스트 케이스 추가
+  - 복잡한 감정 표현 처리 검증
+  - 다중 리스크 요인 분석 테스트
+  - 엔티티 컨텍스트 통합 검증
+
+#### 📚 Documentation
+- **Enhanced CLAUDE.md**
+  - 새로운 감정 분석기 사용법 추가
+  - 리스크 분석기 API 문서화
+  - 프로젝트 구조 업데이트 (새 컴포넌트 반영)
+- **README.md Updates**
+  - Week 3 기능 추가 현황 반영
+  - 향상된 출력 스키마 문서화
+  - 성능 지표 업데이트
+
+#### 🔧 Changed
+- **NLP Pipeline Enhancement**
+  - 기본 감정 분석을 Enhanced Sentiment Analyzer로 교체
+  - 리스크 점수 계산을 Multi-factor Risk Analyzer로 업그레이드
+  - 출력 스키마 확장 (하위 호환성 유지)
+
 ## [1.3.0] - 2024-07-19
 
 ### Week 4 Sprint 1: 실제 Kafka 통합 및 종단간 검증 완료
@@ -412,3 +493,10 @@
 - ✅ 성능 최적화 (목표 초과 달성)
 - ✅ 배치 처리 및 캐싱 시스템
 - ⚠️ F1-Score 56.3% (목표 80% 미달)
+
+#### Week 3: 100%
+- ✅ Enhanced Korean Business Sentiment Analyzer 구현 완료
+- ✅ Multi-factor Risk Analysis 시스템 구축
+- ✅ 엔티티 컨텍스트 통합 처리 구현
+- ✅ 도메인 특화 어휘 사전 확장
+- ✅ 향상된 출력 스키마 및 API 구현

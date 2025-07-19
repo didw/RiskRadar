@@ -12,6 +12,8 @@ API Gateway는 RiskRadar 플랫폼의 통합 API 레이어입니다. GraphQL을 
 - ⚡ **성능 최적화**: DataLoader, 배치 쿼리
 - 🛡️ **에러 처리**: 표준화된 에러 관리
 - 🔍 **서비스 통합**: Graph/ML 서비스 클라이언트
+- 🔴 **실시간 업데이트**: WebSocket 기반 GraphQL Subscriptions (Week 3 추가)
+- 📈 **고급 분석**: 복잡한 Analytics 쿼리 및 시계열 데이터 (Week 3 추가)
 
 ## 🚀 빠른 시작
 
@@ -102,7 +104,7 @@ query Dashboard {
 }
 ```
 
-### 실시간 구독
+### 실시간 구독 (Week 3 추가)
 ```graphql
 # 리스크 알림 구독
 subscription RiskAlerts {
@@ -112,6 +114,178 @@ subscription RiskAlerts {
     severity
     message
     timestamp
+  }
+}
+
+# 실시간 리스크 점수 업데이트 
+subscription RiskScoreUpdates {
+  riskScoreUpdates {
+    company {
+      id
+      name
+      riskScore
+    }
+    riskTrend {
+      date
+      averageRiskScore
+      articleCount
+    }
+    sentimentAnalysis {
+      overall {
+        label
+        score
+        confidence
+      }
+    }
+  }
+}
+
+# 시장 감정 업데이트
+subscription MarketSentiment {
+  marketSentimentUpdates {
+    positive
+    neutral
+    negative
+    total
+  }
+}
+```
+
+### 고급 분석 쿼리 (Week 3 추가)
+```graphql
+# 기업별 종합 분석
+query CompanyAnalytics {
+  companyAnalytics(
+    companyId: "samsung-electronics"
+    timeRange: { from: "2024-01-01", to: "2024-07-19" }
+    includeCompetitors: true
+  ) {
+    company {
+      id
+      name
+      riskScore
+    }
+    riskTrend {
+      date
+      averageRiskScore
+      articleCount
+      topRiskCategories {
+        category
+        score
+        count
+        trend
+      }
+    }
+    newsVolume {
+      date
+      count
+      sources {
+        source
+        count
+        averageSentiment
+      }
+    }
+    competitorComparison {
+      competitor {
+        id
+        name
+      }
+      riskScoreComparison
+      marketPosition
+    }
+  }
+}
+
+# 산업별 분석
+query IndustryAnalytics {
+  industryAnalytics(
+    industry: "반도체"
+    timeRange: { from: "2024-01-01", to: "2024-07-19" }
+    limit: 50
+  ) {
+    industry
+    averageRiskScore
+    totalCompanies
+    newsVolume
+    topCompanies {
+      id
+      name
+      riskScore
+    }
+    riskDistribution {
+      range
+      count
+      percentage
+    }
+    emergingRisks {
+      risk
+      description
+      severity
+      frequency
+    }
+  }
+}
+
+# 네트워크 분석
+query NetworkAnalysis {
+  networkAnalysis(
+    companies: ["samsung", "lg", "sk"]
+    maxDegrees: 2
+  ) {
+    centralCompanies {
+      company {
+        id
+        name
+      }
+      influenceScore
+      connections
+      riskPropagation
+    }
+    riskClusters {
+      id
+      companies {
+        id
+        name
+      }
+      sharedRisks
+      clusterRiskScore
+    }
+  }
+}
+
+# 고급 검색
+query AdvancedSearch {
+  advancedSearch(
+    query: "반도체 공급망"
+    filters: {
+      industry: ["반도체", "전자"]
+      riskLevel: ["HIGH", "CRITICAL"]
+    }
+    timeRange: { from: "2024-07-01", to: "2024-07-19" }
+    limit: 20
+    includeNews: true
+    includeInsights: true
+  ) {
+    companies {
+      id
+      name
+      riskScore
+    }
+    news {
+      id
+      title
+      source
+      publishedAt
+    }
+    insights {
+      insight
+      type
+      confidence
+      significance
+    }
+    totalResults
+    searchTime
+    suggestions
   }
 }
 ```

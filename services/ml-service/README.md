@@ -11,6 +11,9 @@ ML Service는 RiskRadar 플랫폼의 인공지능 엔진입니다. 한국어 뉴
 - ⚠️ **리스크 점수**: 기업별 리스크 레벨 계산
 - 🔑 **키워드 추출**: 핵심 키워드 및 토픽 분석
 - 🚀 **고성능 처리**: 배치 처리 및 캐싱으로 최적화
+- 🧠 **향상된 감정 분석**: 한국어 비즈니스 도메인 특화 분석기 (Week 3 추가)
+- 🔍 **다중 팩터 리스크 분석**: 금융/운영/ESG 리스크 종합 평가 (Week 3 추가)
+- 🎯 **엔티티 컨텍스트 통합**: 엔티티 기반 감정/리스크 조정 (Week 3 추가)
 
 ### 성능 지표 (Sprint 1 - Week 4 최종)
 - ⚡ **처리 속도**: 49ms/article (목표: 100ms) ✅ **목표 달성!**
@@ -119,7 +122,7 @@ CUDA_VISIBLE_DEVICES=0
 }
 ```
 
-### Output Schema (Kafka)
+### Output Schema (Kafka) - Week 3 Enhanced
 ```json
 {
   "original": {
@@ -136,7 +139,35 @@ CUDA_VISIBLE_DEVICES=0
     ],
     "sentiment": {
       "label": "positive",
-      "score": 0.8
+      "score": 0.8,
+      "confidence": 0.85,
+      "breakdown": {
+        "positive_indicators": ["성장", "확대", "투자"],
+        "negative_indicators": [],
+        "intensifiers": ["크게"],
+        "negations": []
+      },
+      "entity_adjusted": true
+    },
+    "risk_analysis": {
+      "overall_risk_score": 3.5,
+      "risk_level": "MEDIUM",
+      "category_scores": {
+        "financial": 0.2,
+        "operational": 0.4,
+        "legal": 0.1,
+        "market": 0.3,
+        "esg": 0.2
+      },
+      "detected_events": [
+        {
+          "event": "투자 확대",
+          "category": "financial",
+          "severity": "LOW",
+          "confidence": 0.8
+        }
+      ],
+      "risk_summary": "운영 리스크가 주요 요인으로 식별됨"
     },
     "keywords": ["반도체", "투자", "공장"],
     "risk_score": 3.5
@@ -184,9 +215,19 @@ watch -n 1 nvidia-smi
   - Enhanced Rule-based NER (현재) - F1: 88.6% ✅
   - KoELECTRA-small-v3-modu-ner - F1: 46.9%
   - KoELECTRA Naver NER - F1: 56.3%
-- **Sentiment**: 규칙 기반 감정 분석
+- **Sentiment**: 
+  - Enhanced Korean Business Sentiment Analyzer (Week 3 추가) ✅
+  - 다중 카테고리 지표 분석 (성장/성공/문제/금융위험)
+  - 강화/약화 수식어 처리
+  - 부정 표현 핸들링
+  - 엔티티 컨텍스트 통합
+- **Risk Analysis**: 
+  - Enhanced Multi-factor Risk Analyzer (Week 3 추가) ✅
+  - 5가지 리스크 카테고리 (금융/운영/법적/시장/ESG)
+  - 이벤트 심각도 검출
+  - 리스크 트렌드 분석
 - **Keywords**: TF-IDF 기반 추출  
-- **Risk Score**: 감정 및 키워드 기반 계산
+- **Risk Score**: 다중 팩터 리스크 점수 계산 (Week 3 강화)
 
 ### 핵심 컴포넌트 (Sprint 1 완료)
 - **Enhanced Rule-based NER**: 한국어 특화 개체명 인식 (100+ 기업/인물 DB)

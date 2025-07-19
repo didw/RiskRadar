@@ -5,10 +5,10 @@
 
 API Gateway는 RiskRadar의 통합 API 엔드포인트를 제공하는 서비스입니다. GraphQL을 통해 클라이언트에게 통합된 데이터 접근을 제공하고, 인증/인가를 처리합니다.
 
-### 🎯 현재 상태 (Sprint 1 Week 2 완료)
+### 🎯 현재 상태 (Sprint 1 Week 3 완료)
 - ✅ Apollo Server 4 기반 GraphQL API 구현
 - ✅ TypeScript 환경 및 빌드 시스템 구성
-- ✅ 포괄적인 GraphQL 스키마 정의 (Company, Risk, User, News)
+- ✅ 포괄적인 GraphQL 스키마 정의 (Company, Risk, User, News, Analytics)
 - ✅ Mock Resolver로 전체 API 구조 구현
 - ✅ JWT 인증 미들웨어 기반 구조 준비
 - ✅ Health check 엔드포인트
@@ -18,6 +18,9 @@ API Gateway는 RiskRadar의 통합 API 엔드포인트를 제공하는 서비스
 - ✅ DataLoader 패턴으로 N+1 쿼리 문제 해결
 - ✅ 포괄적인 테스트 코드 작성 (38개 테스트)
 - ✅ Multi-stage Docker 빌드 최적화
+- ✅ WebSocket 기반 실시간 업데이트 구현
+- ✅ 복잡한 Analytics GraphQL 쿼리 구현
+- ✅ 실시간 구독 및 알림 시스템
 
 ### 📡 접속 정보
 - **GraphQL Playground**: http://localhost:8004/graphql
@@ -30,13 +33,20 @@ api-gateway/
 ├── src/
 │   ├── graphql/            # GraphQL 설정
 │   │   ├── schema/         # 스키마 정의
+│   │   │   ├── base.graphql
 │   │   │   ├── company.graphql
 │   │   │   ├── risk.graphql
-│   │   │   └── user.graphql
+│   │   │   ├── user.graphql
+│   │   │   ├── news.graphql
+│   │   │   ├── subscription.graphql
+│   │   │   └── analytics.graphql    # 새로 추가
 │   │   ├── resolvers/      # 리졸버
 │   │   │   ├── company.ts
 │   │   │   ├── risk.ts
-│   │   │   └── user.ts
+│   │   │   ├── user.ts
+│   │   │   ├── news.ts
+│   │   │   ├── subscription.ts
+│   │   │   └── analytics.ts          # 새로 추가
 │   │   ├── directives/     # 커스텀 디렉티브
 │   │   └── dataloaders/    # DataLoader
 │   ├── auth/              # 인증/인가
@@ -119,11 +129,18 @@ curl -X POST http://localhost:4000/graphql \
 - [x] 에러 처리 표준화
 - [x] 단위/통합 테스트 구현 (38개 테스트 통과)
 
-### Week 3 예정 🚧
-- [ ] WebSocket 실시간 업데이트
+### Week 3 완료 ✅
+- [x] WebSocket 실시간 업데이트 구현
+- [x] 복잡한 Analytics GraphQL 쿼리 구현
+- [x] 실시간 구독 및 알림 시스템
+- [x] 시계열 데이터 및 트렌드 분석 API
+- [x] 고급 필터링 및 검색 기능
+
+### Week 4+ 예정 🚧
 - [ ] Rate Limiting 고도화
-- [ ] 성능 모니터링
+- [ ] 성능 모니터링 대시보드
 - [ ] API 문서 자동 생성
+- [ ] 캐싱 최적화
 
 ## 🔧 주요 컴포넌트
 
@@ -165,37 +182,119 @@ type Subscription {
   # 실시간 업데이트
   riskAlert(companyIds: [ID!]!): RiskAlert!
   newsUpdate(filters: NewsFilter): NewsUpdate!
+  
+  # 고급 실시간 분석 (Week 3 추가)
+  riskScoreUpdates(companyIds: [ID!]!, threshold: Float): CompanyAnalytics!
+  marketSentimentUpdates(industries: [String!], significanceThreshold: Float): SentimentDistribution!
+  emergingRiskAlerts(companies: [ID!], severityThreshold: RiskImpact): EmergingRisk!
+  insightUpdates(industries: [String!], types: [InsightType!], confidenceThreshold: Float): CrossCompanyInsight!
+}
+
+# Week 3: 고급 Analytics 스키마
+type Query {
+  # ... 기존 쿼리들 ...
+  
+  # 회사 분석
+  companyAnalytics(companyId: ID!, timeRange: TimeRangeInput!, includeCompetitors: Boolean): CompanyAnalytics!
+  
+  # 산업 분석
+  industryAnalytics(industry: String!, timeRange: TimeRangeInput, limit: Int): IndustryAnalytics!
+  
+  # 교차 회사 인사이트
+  crossCompanyInsights(filter: AnalyticsFilter!, limit: Int): [CrossCompanyInsight!]!
+  
+  # 네트워크 분석
+  networkAnalysis(companies: [ID!], maxDegrees: Int): NetworkAnalysis!
+  
+  # 고급 검색
+  advancedSearch(query: String!, filters: AdvancedCompanyFilter, timeRange: TimeRangeInput, limit: Int): SearchResult!
+  
+  # 리스크 트렌드 분석
+  riskTrendAnalysis(companyIds: [ID!]!, timeRange: TimeRangeInput!, granularity: TimeGranularity): [RiskTrend!]!
+  
+  # 회사 비교
+  compareCompanies(companyIds: [ID!]!, metrics: [String!]!, timeRange: TimeRangeInput): JSONObject!
+  
+  # 시계열 데이터
+  timeSeriesData(metric: String!, entities: [ID!]!, timeRange: TimeRangeInput!, granularity: TimeGranularity): [TimeSeriesData!]!
 }
 ```
 
-### 2. Apollo Server Setup
+### 2. Apollo Server Setup (with WebSocket)
 ```typescript
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
-import { buildSubgraphSchema } from '@apollo/federation';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/use/ws';
 
+// GraphQL schema for WebSocket
+const schema = makeExecutableSchema({
+  typeDefs,
+  resolvers,
+});
+
+// Create WebSocket server
+const wsServer = new WebSocketServer({
+  server: httpServer,
+  path: '/graphql',
+});
+
+// Configure GraphQL WebSocket server
+const serverCleanup = useServer(
+  {
+    schema,
+    context: async (ctx, msg, args) => {
+      // WebSocket 인증 처리
+      const token = ctx.connectionParams?.authorization?.replace('Bearer ', '');
+      let user = null;
+      
+      if (token) {
+        try {
+          const jwt = await import('jsonwebtoken');
+          const payload = jwt.default.verify(token, config.auth.jwtSecret) as any;
+          user = { id: payload.userId, email: payload.email, role: payload.role };
+        } catch (error) {
+          logger.warn('WebSocket authentication failed:', error);
+        }
+      }
+
+      return {
+        user,
+        loaders: createLoaders(),
+        services: { graph: graphServiceClient, ml: mlServiceClient },
+      };
+    },
+    onConnect: async (ctx) => {
+      logger.info('WebSocket client connected');
+      return true;
+    },
+    onDisconnect: (ctx) => {
+      logger.info('WebSocket client disconnected');
+    },
+  },
+  wsServer
+);
+
+// Create Apollo Server (HTTP only)
 const server = new ApolloServer({
-  schema: buildSubgraphSchema({
-    typeDefs,
-    resolvers,
-  }),
+  typeDefs,
+  resolvers,
   plugins: [
     ApolloServerPluginDrainHttpServer({ httpServer }),
-    ApolloServerPluginLandingPageLocalDefault(),
+    ApolloServerPluginLandingPageLocalDefault({ embed: true }),
+    // WebSocket cleanup plugin
+    {
+      async serverWillStart() {
+        return {
+          async drainServer() {
+            await serverCleanup.dispose();
+          },
+        };
+      },
+    },
   ],
-  context: async ({ req }) => {
-    // 인증 정보 추출
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    const user = token ? await verifyToken(token) : null;
-    
-    // DataLoader 생성
-    const loaders = {
-      company: createCompanyLoader(),
-      risk: createRiskLoader(),
-    };
-    
-    return { user, loaders, services };
-  },
+  formatError,
 });
 ```
 
@@ -205,6 +304,7 @@ const server = new ApolloServer({
 export class GraphServiceClient {
   private client: GraphQLClient;
   
+  // 기본 회사 API
   async getCompany(id: string): Promise<Company | null>
   async getCompanies(filter?, limit?, offset?): Promise<Company[]>
   async getCompaniesByIds(ids: string[]): Promise<Company[]>
@@ -213,6 +313,11 @@ export class GraphServiceClient {
   async searchCompanies(query: string, limit?): Promise<Company[]>
   async addCompany(companyData): Promise<Company | null>
   async updateCompany(id: string, updates): Promise<Company | null>
+  
+  // Week 3 추가: Analytics 지원
+  async getCompaniesByIndustry(industry: string, limit?: number): Promise<Company[]>
+  async getCompetitors(companyId: string): Promise<Company[]>
+  async getGraphConnections(companyId: string): Promise<GraphConnection[]>
 }
 
 // ML Service 클라이언트 (src/services/ml.client.ts)
@@ -623,13 +728,34 @@ const server = new ApolloServer({
 
 ## 📝 최근 업데이트
 
+### 2025-07-19 - Sprint 1 Week 3 완료 🎉
+- ✅ **WebSocket 실시간 업데이트** 구현 완료
+  - GraphQL Subscription을 통한 실시간 데이터 스트리밍
+  - WebSocket 기반 양방향 통신
+  - 인증이 통합된 실시간 연결 관리
+- ✅ **복잡한 Analytics GraphQL 쿼리** 구현 완료
+  - 고급 회사 분석 API (`companyAnalytics`)
+  - 산업 분석 및 벤치마킹 (`industryAnalytics`)  
+  - 교차 회사 인사이트 분석 (`crossCompanyInsights`)
+  - 네트워크 분석 및 리스크 전파 모델링 (`networkAnalysis`)
+  - 시계열 데이터 및 트렌드 분석 (`timeSeriesData`, `riskTrendAnalysis`)
+- ✅ **실시간 구독 및 알림 시스템** 구현 완료
+  - 리스크 점수 실시간 업데이트 (`riskScoreUpdates`)
+  - 시장 감정 변화 추적 (`marketSentimentUpdates`)
+  - 신규 리스크 알림 (`emergingRiskAlerts`)
+  - 교차 분석 인사이트 업데이트 (`insightUpdates`)
+- ✅ **고급 검색 및 필터링** 기능 구현
+  - 다차원 검색 API (`advancedSearch`)
+  - 시간 범위 기반 필터링 (`TimeRangeInput`)
+  - 복잡한 회사 필터 (`AdvancedCompanyFilter`)
+
 ### 2025-07-19 - 통합 테스트 수정
 - ✅ Multi-stage Docker 빌드 구현
 - ✅ TypeScript 빌드 프로세스 개선
 - ✅ 포트 설정 일관성 확보 (4000 → 8004)
 - ✅ .dockerignore 파일 추가로 빌드 최적화
 
-### 2024-07-19 - Sprint 1 Week 2 완료 🎉
+### 2024-07-19 - Sprint 1 Week 2 완료
 - ✅ Graph Service 클라이언트 구현 완료
 - ✅ ML Service 상태 조회 통합 완료
 - ✅ DataLoader 패턴 적용 완료
@@ -643,10 +769,11 @@ const server = new ApolloServer({
 - ✅ JWT 인증 미들웨어 기반 구조 준비
 - ✅ Health check 및 보안 설정 완료
 
-### Next Steps (Week 3)
-- [ ] WebSocket 실시간 업데이트
+### Next Steps (Week 4+)
 - [ ] Rate Limiting 고도화
-- [ ] 성능 모니터링
+- [ ] 성능 모니터링 대시보드
 - [ ] API 문서 자동 생성
+- [ ] 캐싱 최적화
+- [ ] 실시간 데이터 백엔드 통합
 
 *최종 업데이트: 2025-07-19*

@@ -12,12 +12,15 @@ data-service/
 ├── src/
 │   ├── crawlers/                # 크롤러 구현
 │   │   ├── base_crawler.py      # 베이스 크롤러 클래스
+│   │   ├── rss_crawler.py       # RSS 크롤러 베이스 클래스 (Week 3 추가)
 │   │   ├── news/                # 뉴스 크롤러
 │   │   │   ├── chosun_crawler.py
 │   │   │   ├── hankyung_crawler.py
 │   │   │   ├── joongang_crawler.py
 │   │   │   ├── yonhap_crawler.py
-│   │   │   └── mk_crawler.py
+│   │   │   ├── mk_crawler.py
+│   │   │   ├── guardian_rss_crawler.py  # Week 3 추가
+│   │   │   └── bbc_rss_crawler.py       # Week 3 추가
 │   │   └── disclosure/          # 공시 크롤러 (예정)
 │   ├── kafka/                   # Kafka 관련
 │   │   ├── producer.py          # 최적화된 Kafka Producer
@@ -195,7 +198,9 @@ class HighPerformanceScheduler:
             "chosun": ChosunCrawler,    # 3분 간격
             "hankyung": HankyungCrawler,# 3분 간격
             "joongang": JoongangCrawler,# 5분 간격
-            "mk": MKCrawler             # 5분 간격
+            "mk": MKCrawler,            # 5분 간격
+            "guardian": GuardianRSSCrawler, # 10분 간격 (RSS 기반)
+            "bbc": BBCRSSCrawler        # 10분 간격 (RSS 기반)
         }
         self.max_concurrent_crawlers = 5
         self.max_concurrent_articles = 20
@@ -450,7 +455,12 @@ kafka-topics --list --bootstrap-server localhost:9092
    - 매일경제 (MKCrawler)
    - API 엔드포인트 구현
    
-3. ✅ **Week 3**: 고급 기능
+3. ✅ **Week 3**: RSS 크롤러 확장 및 고급 기능
+   - RSS 크롤러 프레임워크 구현 (feedparser 기반)
+   - Guardian RSS 크롤러 추가 (국제 뉴스)
+   - BBC RSS 크롤러 추가 (글로벌 비즈니스)
+   - 총 7개 뉴스 소스 지원 (기존 5개 + 새로운 2개)
+   - 다중 프로토콜 지원 (웹 스크래핑 + RSS 피드)
    - Optimized Kafka Producer (배치, 압축)
    - Bloom Filter 중복 제거
    - 100건 단위 배치 처리

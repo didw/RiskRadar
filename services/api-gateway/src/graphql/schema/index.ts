@@ -16,6 +16,7 @@ const riskTypeDefs = loadGraphQLFile('risk.graphql');
 const userTypeDefs = loadGraphQLFile('user.graphql');
 const newsTypeDefs = loadGraphQLFile('news.graphql');
 const subscriptionTypeDefs = loadGraphQLFile('subscription.graphql');
+const analyticsTypeDefs = loadGraphQLFile('analytics.graphql');
 
 export const typeDefs = gql`
   ${baseTypeDefs}
@@ -24,4 +25,5 @@ export const typeDefs = gql`
   ${userTypeDefs}
   ${newsTypeDefs}
   ${subscriptionTypeDefs}
+  ${analyticsTypeDefs}
 `;

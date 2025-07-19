@@ -21,6 +21,8 @@ from .crawlers.news import (
     ChosunCrawler, HankyungCrawler, JoongangCrawler,
     YonhapCrawler, MKCrawler
 )
+from .crawlers.news.bbc_crawler import BBCCrawler
+from .crawlers.news.guardian_crawler import GuardianCrawler
 from .kafka.producer import get_producer
 from .processors.batch_processor import get_batch_processor
 from .processors.deduplicator import get_deduplicator
@@ -75,7 +77,9 @@ class SchedulerConfig:
         "chosun": 180,     # 3분
         "hankyung": 180,   # 3분
         "joongang": 300,   # 5분
-        "mk": 300          # 5분
+        "mk": 300,         # 5분
+        "bbc": 360,        # 6분 (RSS)
+        "guardian": 300    # 5분 (RSS)
     })
     
     # 소스별 우선순위
@@ -84,7 +88,9 @@ class SchedulerConfig:
         "chosun": SourcePriority.HIGH,
         "hankyung": SourcePriority.HIGH,
         "joongang": SourcePriority.NORMAL,
-        "mk": SourcePriority.NORMAL
+        "mk": SourcePriority.NORMAL,
+        "bbc": SourcePriority.HIGH,        # 국제 뉴스 우선순위
+        "guardian": SourcePriority.HIGH    # 국제 뉴스 우선순위
     })
     
     # 재시도 설정
@@ -124,7 +130,9 @@ class HighPerformanceScheduler:
             "hankyung": HankyungCrawler,
             "joongang": JoongangCrawler,
             "yonhap": YonhapCrawler,
-            "mk": MKCrawler
+            "mk": MKCrawler,
+            "bbc": BBCCrawler,
+            "guardian": GuardianCrawler
         }
         
         # 태스크 관리

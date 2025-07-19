@@ -5,6 +5,24 @@
 
 ML Service는 RiskRadar의 자연어 처리 및 머신러닝 추론을 담당하는 마이크로서비스입니다. 한국어 뉴스 텍스트에서 엔티티를 추출하고, 감정 분석을 수행하며, 리스크 관련 인사이트를 생성합니다.
 
+## 🎯 현재 상태 (Sprint 1 Week 3 완료)
+
+- ✅ **FastAPI 기반 ML 서비스 구축** - 고성능 비동기 처리
+- ✅ **다중 NER 모델 지원** - Mock, KLUE-BERT, KoELECTRA 등
+- ✅ **Kafka 통합** - 실시간 뉴스 데이터 처리 파이프라인
+- ✅ **포괄적인 평가 시스템** - F1 Score 기반 모델 성능 측정
+- ✅ **배치 처리 최적화** - 대용량 뉴스 데이터 효율적 처리
+- ✅ **캐싱 시스템** - Redis 기반 성능 최적화
+- ✅ **테스트 자동화** - 단위/통합 테스트 및 성능 검증
+- ✅ **향상된 감정 분석** - 한국어 비즈니스 도메인 특화 분석기
+- ✅ **고도화된 리스크 분석** - 다중 팩터 리스크 평가 모델
+- ✅ **강화된 전처리 파이프라인** - 엔티티 컨텍스트 통합 분석
+
+### 📡 접속 정보
+- **API Endpoint**: http://localhost:8002
+- **Health Check**: http://localhost:8002/health
+- **API Docs**: http://localhost:8002/docs
+
 ## 🏗️ 프로젝트 구조
 
 ```
@@ -19,10 +37,12 @@ ml-service/
 │   │   │   ├── company_matcher.py      # 회사명 매칭
 │   │   │   ├── cache_manager.py        # 캐시 관리
 │   │   │   └── knowledge_base.py       # 지식 베이스
-│   │   ├── sentiment/     # 감정 분석
-│   │   │   └── sentiment_analyzer.py
-│   │   └── risk/          # 리스크 분류
-│   │       └── risk_classifier.py
+│   │   ├── sentiment/     # 감정 분석 (Week 3 강화)
+│   │   │   ├── enhanced_sentiment.py   # 새로 추가: 향상된 감정 분석기
+│   │   │   └── mock_sentiment.py       # Mock 감정 분석
+│   │   └── risk/          # 리스크 분류 (Week 3 강화)
+│   │       ├── risk_analyzer.py        # 새로 추가: 종합 리스크 분석기
+│   │       └── risk_classifier.py      # 기존 리스크 분류기
 │   ├── processors/        # NLP 전처리
 │   │   ├── tokenizer.py   # 한국어 토크나이저
 │   │   ├── normalizer.py  # 텍스트 정규화
@@ -139,7 +159,113 @@ class NLPPipeline:
         )
 ```
 
-### 2. Entity Extraction
+### 2. Enhanced Sentiment Analysis (Week 3 추가)
+```python
+class EnhancedSentimentAnalyzer:
+    """향상된 한국어 비즈니스 도메인 감정 분석기"""
+    
+    def __init__(self):
+        # 긍정적 지표들
+        self.positive_indicators = {
+            'growth': ['증가', '상승', '성장', '확대', '급증', '호조'],
+            'success': ['성공', '달성', '기록', '성과', '수익', '이익'],
+            'positive_business': ['투자', '확장', '진출', '출시', '런칭'],
+        }
+        
+        # 부정적 지표들  
+        self.negative_indicators = {
+            'decline': ['감소', '하락', '급락', '폭락', '하향'],
+            'problems': ['문제', '이슈', '우려', '위험', '리스크'],
+            'financial_stress': ['연체', '부실', '파산', '회생', '부채'],
+        }
+        
+        # 강화/약화 수식어
+        self.intensifiers = {
+            'strong_positive': ['대폭', '크게', '급격히', '현저히'],
+            'strong_negative': ['대폭', '크게', '급격히', '심각하게'],
+            'mild': ['소폭', '약간', '다소', '일부'],
+        }
+    
+    def analyze_sentiment(self, text: str, entities: Optional[List] = None) -> Sentiment:
+        """
+        향상된 감정 분석
+        - 다중 카테고리 지표 분석
+        - 강화/약화 수식어 처리
+        - 부정 표현 핸들링
+        - 엔티티 컨텍스트 통합
+        """
+        sentiment_scores = self._calculate_sentiment_scores(text)
+        
+        # 엔티티 기반 조정
+        if entities:
+            sentiment_scores = self._adjust_with_entities(sentiment_scores, entities, text)
+        
+        return self._determine_final_sentiment(sentiment_scores)
+```
+
+### 3. Comprehensive Risk Analysis (Week 3 추가)
+```python
+class EnhancedRiskAnalyzer:
+    """다중 팩터 리스크 분석기"""
+    
+    def __init__(self):
+        # 금융 리스크 요소
+        self.financial_risks = {
+            'debt_default': ['연체', '부실', '채무불이행', '디폴트', '파산'],
+            'liquidity_crisis': ['유동성', '자금부족', '현금흐름', '긴급자금'],
+            'credit_rating': ['신용등급', '등급하향', '등급상향', '신용평가'],
+        }
+        
+        # 운영 리스크 요소
+        self.operational_risks = {
+            'supply_chain': ['공급망', '원재료', '부품부족', '납기지연'],
+            'production_issues': ['생산중단', '가동중단', '공장폐쇄', '품질문제'],
+            'labor_issues': ['파업', '노사갈등', '임금협상', '정리해고'],
+        }
+        
+        # ESG 리스크
+        self.esg_risks = {
+            'environmental': ['환경오염', '탄소배출', '폐수', '환경규제'],
+            'social': ['사회적책임', '인권', '다양성', '지역사회'],
+            'governance': ['지배구조', '투명성', '이사회', '내부거래'],
+        }
+    
+    def analyze_risk(self, text: str, entities: Optional[List] = None, 
+                    sentiment: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        종합적인 리스크 분석
+        - 다중 카테고리 리스크 평가 (금융, 운영, 법적, 시장, ESG)
+        - 이벤트 심각도 검출
+        - 엔티티 및 감정 통합 분석
+        - 리스크 트렌드 및 예측
+        """
+        # 1. 리스크 이벤트 감지
+        risk_events = self._detect_risk_events(text)
+        
+        # 2. 카테고리별 리스크 점수 계산
+        category_scores = self._calculate_category_scores(text, risk_events)
+        
+        # 3. 엔티티 기반 조정
+        if entities:
+            category_scores = self._adjust_with_entities(category_scores, entities, text)
+        
+        # 4. 감정 기반 조정
+        if sentiment:
+            category_scores = self._adjust_with_sentiment(category_scores, sentiment)
+        
+        # 5. 종합 리스크 점수 계산
+        overall_risk_score = self._calculate_overall_risk(category_scores)
+        
+        return {
+            'overall_risk_score': overall_risk_score,
+            'risk_level': self._determine_risk_level(overall_risk_score),
+            'category_scores': category_scores,
+            'detected_events': risk_events,
+            'risk_summary': self._generate_risk_summary(risk_events, category_scores)
+        }
+```
+
+### 4. Entity Extraction
 ```python
 class EntityExtractor:
     """개체명 인식"""

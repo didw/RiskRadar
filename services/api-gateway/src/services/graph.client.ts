@@ -323,6 +323,32 @@ export class GraphServiceClient {
       return null;
     }
   }
+
+  // Additional methods for analytics support
+  async getCompaniesByIndustry(industry: string, limit = 50): Promise<Company[]> {
+    try {
+      return await this.getCompanies({ industry }, limit);
+    } catch (error) {
+      logger.error(`Failed to get companies by industry ${industry}:`, error);
+      return [];
+    }
+  }
+
+  async getCompetitors(companyId: string): Promise<Company[]> {
+    try {
+      // Mock implementation - would get actual competitors based on industry/market analysis
+      const company = await this.getCompany(companyId);
+      if (!company?.industry) {
+        return [];
+      }
+
+      const competitors = await this.getCompaniesByIndustry(company.industry, 10);
+      return competitors.filter(c => c.id !== companyId);
+    } catch (error) {
+      logger.error(`Failed to get competitors for company ${companyId}:`, error);
+      return [];
+    }
+  }
 }
 
 export const graphServiceClient = new GraphServiceClient();
