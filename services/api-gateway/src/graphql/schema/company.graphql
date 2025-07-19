@@ -1,0 +1,74 @@
+type Company {
+  id: ID!
+  name: String!
+  industry: String
+  sector: String
+  description: String
+  riskScore: Float
+  marketCap: Float
+  employees: Int
+  founded: Int
+  headquarters: String
+  website: String
+  lastUpdated: DateTime!
+  createdAt: DateTime!
+}
+
+type CompanyConnection {
+  edges: [CompanyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type CompanyEdge {
+  node: Company!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input CompanyFilter {
+  name: String
+  industry: String
+  sector: String
+  minRiskScore: Float
+  maxRiskScore: Float
+  minMarketCap: Float
+  maxMarketCap: Float
+}
+
+input CompanySort {
+  field: CompanySortField!
+  direction: SortDirection!
+}
+
+enum CompanySortField {
+  NAME
+  RISK_SCORE
+  MARKET_CAP
+  CREATED_AT
+  UPDATED_AT
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+extend type Query {
+  company(id: ID!): Company
+  companies(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    filter: CompanyFilter
+    sort: CompanySort
+  ): CompanyConnection!
+  searchCompanies(query: String!, limit: Int = 10): [Company!]!
+}

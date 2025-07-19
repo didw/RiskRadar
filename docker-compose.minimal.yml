@@ -1,0 +1,56 @@
+# 최소 실행 환경용 Docker Compose
+version: '3.8'
+
+services:
+  # Kafka - Data/ML/Graph Service용
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: riskradar-kafka-minimal
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: riskradar-zookeeper-minimal
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  # Redis - Data Service(중복제거), API Gateway(세션)용
+  redis:
+    image: redis:7-alpine
+    container_name: riskradar-redis-minimal
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  # Neo4j - Graph Service용
+  neo4j:
+    image: neo4j:5-community
+    container_name: riskradar-neo4j-minimal
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    environment:
+      NEO4J_AUTH: neo4j/password123
+      NEO4J_dbms_memory_heap_initial__size: 512m
+      NEO4J_dbms_memory_heap_max__size: 1G
+    volumes:
+      - neo4j-data:/data
+
+volumes:
+  redis-data:
+  neo4j-data:

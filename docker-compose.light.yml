@@ -1,0 +1,115 @@
+version: '3.8'
+
+# 경량 개발 환경 (2GB RAM용)
+# 사용법: docker-compose -f docker-compose.light.yml up
+
+services:
+  # 최소 인프라만 포함
+  redis:
+    image: redis:7-alpine
+    container_name: riskradar-redis-light
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    networks:
+      - riskradar-network
+
+  # Mock Kafka (Redis Pub/Sub으로 대체)
+  # 실제 Kafka는 메모리를 너무 많이 사용
+
+  # 한번에 하나씩 실행할 서비스들
+  data-service:
+    build: ./services/data-service
+    container_name: riskradar-data-service
+    ports:
+      - "8001:8001"
+    environment:
+      REDIS_URL: redis://redis:6379
+      SERVICE_PORT: 8001
+      USE_MOCK_KAFKA: "true"  # Redis Pub/Sub 사용
+    depends_on:
+      - redis
+    volumes:
+      - ./services/data-service:/app
+    mem_limit: 256m
+    networks:
+      - riskradar-network
+
+  ml-service:
+    build: ./services/ml-service
+    container_name: riskradar-ml-service
+    ports:
+      - "8002:8002"
+    environment:
+      REDIS_URL: redis://redis:6379
+      SERVICE_PORT: 8002
+      USE_MOCK_KAFKA: "true"
+    depends_on:
+      - redis
+    volumes:
+      - ./services/ml-service:/app
+    mem_limit: 256m
+    networks:
+      - riskradar-network
+    profiles: ["ml"]  # docker-compose --profile ml up
+
+  graph-service:
+    build: ./services/graph-service
+    container_name: riskradar-graph-service
+    ports:
+      - "8003:8003"
+    environment:
+      REDIS_URL: redis://redis:6379
+      SERVICE_PORT: 8003
+      USE_IN_MEMORY_DB: "true"  # Neo4j 대신 메모리 DB
+    depends_on:
+      - redis
+    volumes:
+      - ./services/graph-service:/app
+    mem_limit: 256m
+    networks:
+      - riskradar-network
+    profiles: ["graph"]
+
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: riskradar-api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      REDIS_URL: redis://redis:6379
+      # Mock 모드로 실행
+      USE_MOCK_SERVICES: "true"
+    depends_on:
+      - redis
+    volumes:
+      - ./services/api-gateway:/app
+      - /app/node_modules
+    mem_limit: 256m
+    networks:
+      - riskradar-network
+    profiles: ["api"]
+
+  web-ui:
+    build: ./services/web-ui
+    container_name: riskradar-web-ui
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_GRAPHQL_URL: http://localhost:4000/graphql
+      # 개발 모드 최적화
+      NODE_OPTIONS: "--max-old-space-size=256"
+    volumes:
+      - ./services/web-ui:/app
+      - /app/node_modules
+      - /app/.next
+    mem_limit: 384m
+    networks:
+      - riskradar-network
+    profiles: ["ui"]
+
+networks:
+  riskradar-network:
+    driver: bridge

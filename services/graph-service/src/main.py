@@ -1,0 +1,259 @@
+"""Graph Service Main Application"""
+from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
+import os
+import logging
+from datetime import datetime
+from typing import Dict, Any
+
+from src.neo4j.driver import driver as neo4j_driver
+from src.kafka.consumer import consumer as kafka_consumer
+from src.models.schemas import (
+    GraphStatsResponse, 
+    GraphQueryRequest,
+    NetworkRiskRequest,
+    NetworkAnalysisResponse
+)
+from src.kafka.entity_cache import entity_cache
+
+# 로깅 설정
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """애플리케이션 생명주기 관리"""
+    # Startup
+    logger.info("Starting Graph Service...")
+    
+    # Neo4j 연결은 첫 사용 시 자동으로 시도됨
+    logger.info("Neo4j connection will be established on first use")
+    
+    # Kafka Consumer 시작
+    kafka_consumer.start()
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down Graph Service...")
+    kafka_consumer.stop()
+    neo4j_driver.close()
+
+# FastAPI 앱 생성
+app = FastAPI(
+    title=os.getenv("API_TITLE", "Graph Service API"),
+    version=os.getenv("API_VERSION", "1.0.0"),
+    lifespan=lifespan
+)
+
+@app.get("/health")
+async def health_check():
+    """헬스 체크 엔드포인트"""
+    neo4j_status = "connected"
+    neo4j_error = None
+    
+    try:
+        # Neo4j 연결 상태 확인 (최대 5초 대기)
+        import time
+        start_time = time.time()
+        neo4j_driver.driver.verify_connectivity()
+        response_time = (time.time() - start_time) * 1000  # ms
+    except Exception as e:
+        neo4j_status = "disconnected"
+        neo4j_error = str(e)
+        response_time = None
+    
+    # 전체 서비스 상태 결정
+    overall_status = "healthy" if neo4j_status == "connected" else "degraded"
+    
+    health_response = {
+        "status": overall_status,
+        "service": "graph-service",
+        "timestamp": datetime.now().isoformat(),
+        "components": {
+            "neo4j": {
+                "status": neo4j_status,
+                "response_time_ms": response_time,
+                "error": neo4j_error
+            },
+            "kafka_consumer": {
+                "status": "running" if kafka_consumer.running else "stopped"
+            }
+        }
+    }
+    
+    # 서비스가 degraded 상태면 503 반환
+    if overall_status == "degraded":
+        raise HTTPException(status_code=503, detail=health_response)
+    
+    return health_response
+
+@app.get("/api/v1/graph/stats", response_model=GraphStatsResponse)
+async def get_graph_stats():
+    """그래프 통계 조회"""
+    try:
+        # 노드 수 조회
+        node_query = """
+        MATCH (n)
+        RETURN labels(n)[0] as type, count(n) as count
+        """
+        node_results = neo4j_driver.execute_read(node_query)
+        
+        # 관계 수 조회
+        rel_query = """
+        MATCH ()-[r]->()
+        RETURN type(r) as type, count(r) as count
+        """
+        rel_results = neo4j_driver.execute_read(rel_query)
+        
+        # 결과 집계
+        node_types = {row['type']: row['count'] for row in node_results if row['type']}
+        rel_types = {row['type']: row['count'] for row in rel_results}
+        
+        total_nodes = sum(node_types.values())
+        total_rels = sum(rel_types.values())
+        
+        return GraphStatsResponse(
+            node_count=total_nodes,
+            relationship_count=total_rels,
+            node_types=node_types,
+            relationship_types=rel_types,
+            timestamp=datetime.now()
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting graph stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/graph/query")
+async def query_graph(request: GraphQueryRequest):
+    """그래프 쿼리 실행"""
+    try:
+        query = """
+        MATCH path = (n {id: $entity_id})-[*1..$depth]-()
+        RETURN path
+        LIMIT 100
+        """
+        
+        results = neo4j_driver.execute_read(
+            query,
+            entity_id=request.entity_id,
+            depth=request.depth
+        )
+        
+        return {
+            "entity_id": request.entity_id,
+            "paths": len(results),
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error querying graph: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/graph/network-risk", response_model=NetworkAnalysisResponse)
+async def analyze_network_risk(request: NetworkRiskRequest):
+    """네트워크 리스크 분석"""
+    try:
+        # 연결된 고위험 엔티티 찾기
+        risk_query = """
+        MATCH (c:Company {id: $company_id})
+        MATCH path = (c)-[*1..$depth]-(connected)
+        WHERE connected.risk_score >= $min_risk_score
+        WITH c, connected, path
+        RETURN 
+            c.name as central_entity,
+            count(DISTINCT connected) as connected_count,
+            avg(connected.risk_score) as avg_risk,
+            collect(DISTINCT {
+                id: connected.id,
+                name: connected.name,
+                risk_score: connected.risk_score,
+                type: labels(connected)[0]
+            }) as high_risk_entities
+        """
+        
+        results = neo4j_driver.execute_read(
+            risk_query,
+            company_id=request.company_id,
+            depth=request.depth,
+            min_risk_score=request.min_risk_score
+        )
+        
+        if not results:
+            raise HTTPException(status_code=404, detail="Company not found")
+        
+        result = results[0]
+        
+        return NetworkAnalysisResponse(
+            central_entity=result['central_entity'],
+            connected_entities=result['connected_count'],
+            average_risk_score=result['avg_risk'] or 0.0,
+            high_risk_entities=result['high_risk_entities'][:10],  # Top 10
+            risk_paths=[],  # TODO: 경로 분석 추가
+            analysis_timestamp=datetime.now()
+        )
+        
+    except Exception as e:
+        logger.error(f"Error analyzing network risk: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/companies/{company_id}")
+async def get_company_details(company_id: str):
+    """기업 상세 정보 조회"""
+    try:
+        query = """
+        MATCH (c:Company {id: $company_id})
+        OPTIONAL MATCH (c)-[r:MENTIONED_IN]->(n:NewsArticle)
+        WITH c, count(n) as news_count, avg(r.sentiment) as avg_sentiment
+        OPTIONAL MATCH (c)-[:AFFECTS]-(e:Event)
+        RETURN c as company, 
+               news_count,
+               avg_sentiment,
+               count(e) as event_count
+        """
+        
+        results = neo4j_driver.execute_read(query, company_id=company_id)
+        
+        if not results:
+            raise HTTPException(status_code=404, detail="Company not found")
+        
+        return results[0]
+        
+    except Exception as e:
+        logger.error(f"Error getting company details: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/graph/cache/stats")
+async def get_cache_stats():
+    """엔티티 캐시 통계 조회"""
+    try:
+        return entity_cache.get_cache_stats()
+    except Exception as e:
+        logger.error(f"Error getting cache stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/graph/cache/refresh")
+async def refresh_cache():
+    """엔티티 캐시 수동 새로고침"""
+    try:
+        # 강제 새로고침
+        entity_cache.get_companies(force_refresh=True)
+        entity_cache.get_persons(force_refresh=True)
+        
+        stats = entity_cache.get_cache_stats()
+        return {
+            "message": "Cache refreshed successfully",
+            "stats": stats
+        }
+    except Exception as e:
+        logger.error(f"Error refreshing cache: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("SERVICE_PORT", "8003"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

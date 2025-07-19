@@ -1,0 +1,144 @@
+type Risk {
+  id: ID!
+  type: RiskType!
+  severity: RiskSeverity!
+  probability: Float!
+  impact: Float!
+  description: String!
+  source: String
+  detectedAt: DateTime!
+  resolvedAt: DateTime
+  status: RiskStatus!
+  affectedCompanies: [Company!]!
+  metadata: JSON
+}
+
+type RiskAnalysis {
+  id: ID!
+  companyId: ID!
+  company: Company!
+  overallScore: Float!
+  financialRisk: Float!
+  operationalRisk: Float!
+  marketRisk: Float!
+  reputationalRisk: Float!
+  regulatoryRisk: Float!
+  networkRisk: Float!
+  risks: [Risk!]!
+  analyzedAt: DateTime!
+  confidence: Float!
+}
+
+type RiskEvent {
+  id: ID!
+  title: String!
+  description: String!
+  eventType: String!
+  severity: RiskSeverity!
+  source: String!
+  sourceUrl: String
+  publishedAt: DateTime!
+  companies: [Company!]!
+  keywords: [String!]!
+  sentiment: Float
+  location: String
+}
+
+type RiskAlert {
+  id: ID!
+  riskId: ID!
+  risk: Risk!
+  alertType: AlertType!
+  message: String!
+  createdAt: DateTime!
+  acknowledged: Boolean!
+  acknowledgedAt: DateTime
+  acknowledgedBy: User
+}
+
+enum RiskType {
+  FINANCIAL
+  OPERATIONAL
+  MARKET
+  REPUTATIONAL
+  REGULATORY
+  CYBER_SECURITY
+  SUPPLY_CHAIN
+  ENVIRONMENTAL
+  POLITICAL
+  OTHER
+}
+
+enum RiskSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum RiskStatus {
+  ACTIVE
+  MONITORING
+  MITIGATED
+  RESOLVED
+  CLOSED
+}
+
+enum AlertType {
+  NEW_RISK
+  RISK_ESCALATION
+  RISK_PATTERN
+  THRESHOLD_BREACH
+}
+
+input RiskFilter {
+  types: [RiskType!]
+  severities: [RiskSeverity!]
+  statuses: [RiskStatus!]
+  companyIds: [ID!]
+  dateFrom: DateTime
+  dateTo: DateTime
+}
+
+input RiskEventFilter {
+  severities: [RiskSeverity!]
+  eventTypes: [String!]
+  companyIds: [ID!]
+  keywords: [String!]
+  dateFrom: DateTime
+  dateTo: DateTime
+}
+
+enum RiskEventSort {
+  PUBLISHED_AT
+  SEVERITY
+  SENTIMENT
+}
+
+extend type Query {
+  risk(id: ID!): Risk
+  risks(filter: RiskFilter, limit: Int = 50, offset: Int = 0): [Risk!]!
+  riskAnalysis(companyId: ID!): RiskAnalysis
+  riskEvents(
+    filter: RiskEventFilter
+    sort: RiskEventSort
+    limit: Int = 50
+    offset: Int = 0
+  ): [RiskEvent!]!
+  riskAlerts(
+    acknowledged: Boolean
+    limit: Int = 50
+    offset: Int = 0
+  ): [RiskAlert!]!
+}
+
+extend type Mutation {
+  acknowledgeRiskAlert(alertId: ID!): RiskAlert!
+  updateRiskStatus(riskId: ID!, status: RiskStatus!): Risk!
+}
+
+extend type Subscription {
+  riskAlert(companyIds: [ID!]): RiskAlert!
+  riskStatusChanged(riskIds: [ID!]): Risk!
+}

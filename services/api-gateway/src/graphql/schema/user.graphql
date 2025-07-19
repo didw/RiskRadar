@@ -1,0 +1,131 @@
+type User {
+  id: ID!
+  email: String!
+  name: String!
+  role: UserRole!
+  department: String
+  preferences: UserPreferences!
+  watchlist: [Company!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  lastLoginAt: DateTime
+}
+
+type UserPreferences {
+  emailNotifications: Boolean!
+  alertThreshold: RiskSeverity!
+  dashboardLayout: String
+  language: String!
+  timezone: String!
+}
+
+type AuthPayload {
+  user: User!
+  token: String!
+  refreshToken: String!
+  expiresAt: DateTime!
+}
+
+type Dashboard {
+  id: ID!
+  userId: ID!
+  totalCompanies: Int!
+  highRiskCompanies: Int!
+  recentAlerts: [RiskAlert!]!
+  riskTrends: [RiskTrend!]!
+  topRisks: [Risk!]!
+  watchlistUpdates: [WatchlistUpdate!]!
+}
+
+type RiskTrend {
+  date: DateTime!
+  riskType: RiskType!
+  count: Int!
+  averageSeverity: Float!
+}
+
+type WatchlistUpdate {
+  company: Company!
+  updateType: String!
+  description: String!
+  timestamp: DateTime!
+}
+
+type Insight {
+  id: ID!
+  type: InsightType!
+  title: String!
+  description: String!
+  importance: Float!
+  relatedCompanies: [Company!]!
+  relatedRisks: [Risk!]!
+  createdAt: DateTime!
+}
+
+type Subscription {
+  id: ID!
+  userId: ID!
+  companyIds: [ID!]!
+  alertTypes: [AlertType!]!
+  active: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum UserRole {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum InsightType {
+  RISK_PATTERN
+  TREND_ANALYSIS
+  ANOMALY_DETECTION
+  CORRELATION
+  PREDICTION
+}
+
+input UserPreferencesInput {
+  emailNotifications: Boolean
+  alertThreshold: RiskSeverity
+  dashboardLayout: String
+  language: String
+  timezone: String
+}
+
+input SignUpInput {
+  email: String!
+  password: String!
+  name: String!
+  department: String
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+extend type Query {
+  me: User
+  user(id: ID!): User
+  users(role: UserRole, limit: Int = 50, offset: Int = 0): [User!]!
+  dashboard: Dashboard!
+  insights(companyId: ID, type: InsightType, limit: Int = 20): [Insight!]!
+}
+
+extend type Mutation {
+  signUp(input: SignUpInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  logout: Boolean!
+  refreshToken(token: String!): AuthPayload!
+  updateProfile(name: String, department: String): User!
+  updatePreferences(input: UserPreferencesInput!): User!
+  addToWatchlist(companyId: ID!): User!
+  removeFromWatchlist(companyId: ID!): User!
+  subscribeToAlerts(companyIds: [ID!]!, alertTypes: [AlertType!]!): Subscription!
+}
+
+extend type Subscription {
+  watchlistUpdate(userId: ID!): WatchlistUpdate!
+}

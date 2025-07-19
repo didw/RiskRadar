@@ -1,0 +1,164 @@
+{
+  "test_cases": [
+    {
+      "id": "test_001",
+      "text": "삼성전자가 새로운 반도체 공장을 건설한다고 이재용 회장이 발표했습니다.",
+      "expected_entities": [
+        {"text": "삼성전자", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "이재용", "type": "PERSON", "start": 26, "end": 29}
+      ]
+    },
+    {
+      "id": "test_002",
+      "text": "현대자동차 정의선 회장은 전기차 시장 진출을 선언했다.",
+      "expected_entities": [
+        {"text": "현대자동차", "type": "COMPANY", "start": 0, "end": 5},
+        {"text": "정의선", "type": "PERSON", "start": 6, "end": 9}
+      ]
+    },
+    {
+      "id": "test_003",
+      "text": "SK하이닉스가 메모리 반도체 증산을 위해 대규모 투자를 진행합니다.",
+      "expected_entities": [
+        {"text": "SK하이닉스", "type": "COMPANY", "start": 0, "end": 6}
+      ]
+    },
+    {
+      "id": "test_004",
+      "text": "LG전자와 LG화학이 배터리 사업 협력을 강화한다.",
+      "expected_entities": [
+        {"text": "LG전자", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "LG화학", "type": "COMPANY", "start": 6, "end": 10}
+      ]
+    },
+    {
+      "id": "test_005",
+      "text": "네이버 최수연 대표가 AI 플랫폼 고도화 계획을 발표했다.",
+      "expected_entities": [
+        {"text": "네이버", "type": "COMPANY", "start": 0, "end": 3},
+        {"text": "최수연", "type": "PERSON", "start": 4, "end": 7}
+      ]
+    },
+    {
+      "id": "test_006",
+      "text": "카카오는 모빌리티 사업부를 분사하여 카카오모빌리티를 설립했다.",
+      "expected_entities": [
+        {"text": "카카오", "type": "COMPANY", "start": 0, "end": 3},
+        {"text": "카카오모빌리티", "type": "COMPANY", "start": 21, "end": 29}
+      ]
+    },
+    {
+      "id": "test_007",
+      "text": "한화그룹 김승연 회장이 방산 사업 확대를 지시했다.",
+      "expected_entities": [
+        {"text": "한화그룹", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "김승연", "type": "PERSON", "start": 5, "end": 8}
+      ]
+    },
+    {
+      "id": "test_008",
+      "text": "포스코홀딩스가 이차전지 소재 공장 건설을 추진한다.",
+      "expected_entities": [
+        {"text": "포스코홀딩스", "type": "COMPANY", "start": 0, "end": 7}
+      ]
+    },
+    {
+      "id": "test_009",
+      "text": "KB금융 윤종규 회장과 신한금융 진옥동 회장이 핀테크 협력을 논의했다.",
+      "expected_entities": [
+        {"text": "KB금융", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "윤종규", "type": "PERSON", "start": 5, "end": 8},
+        {"text": "신한금융", "type": "COMPANY", "start": 13, "end": 17},
+        {"text": "진옥동", "type": "PERSON", "start": 18, "end": 21}
+      ]
+    },
+    {
+      "id": "test_010",
+      "text": "CJ그룹과 롯데그룹이 유통 시장에서 경쟁을 벌이고 있다.",
+      "expected_entities": [
+        {"text": "CJ그룹", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "롯데그룹", "type": "COMPANY", "start": 6, "end": 10}
+      ]
+    },
+    {
+      "id": "test_011", 
+      "text": "이마트가 쿠팡과의 경쟁에서 우위를 점하기 위해 새로운 전략을 발표했다.",
+      "expected_entities": [
+        {"text": "이마트", "type": "COMPANY", "start": 0, "end": 3},
+        {"text": "쿠팡", "type": "COMPANY", "start": 5, "end": 7}
+      ]
+    },
+    {
+      "id": "test_012",
+      "text": "두산그룹 박정원 회장은 수소 사업을 미래 성장동력으로 지정했다.",
+      "expected_entities": [
+        {"text": "두산그룹", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "박정원", "type": "PERSON", "start": 5, "end": 8}
+      ]
+    },
+    {
+      "id": "test_013",
+      "text": "GS칼텍스와 S-Oil이 정유 시장 점유율 확대를 위해 노력하고 있다.",
+      "expected_entities": [
+        {"text": "GS칼텍스", "type": "COMPANY", "start": 0, "end": 6},
+        {"text": "S-Oil", "type": "COMPANY", "start": 8, "end": 13}
+      ]
+    },
+    {
+      "id": "test_014",
+      "text": "대한항공이 아시아나항공 인수를 완료했다고 조원태 회장이 밝혔다.",
+      "expected_entities": [
+        {"text": "대한항공", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "아시아나항공", "type": "COMPANY", "start": 6, "end": 12},
+        {"text": "조원태", "type": "PERSON", "start": 23, "end": 26}
+      ]
+    },
+    {
+      "id": "test_015",
+      "text": "셀트리온 서정진 회장이 바이오시밀러 시장 확대를 선언했다.",
+      "expected_entities": [
+        {"text": "셀트리온", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "서정진", "type": "PERSON", "start": 5, "end": 8}
+      ]
+    },
+    {
+      "id": "test_016",
+      "text": "하이브와 SM엔터테인먼트가 K-POP 글로벌 진출을 위해 협력한다.",
+      "expected_entities": [
+        {"text": "하이브", "type": "COMPANY", "start": 0, "end": 3},
+        {"text": "SM엔터테인먼트", "type": "COMPANY", "start": 5, "end": 13}
+      ]
+    },
+    {
+      "id": "test_017",
+      "text": "토스 이승건 대표는 핀테크 규제 완화를 정부에 요청했다.",
+      "expected_entities": [
+        {"text": "토스", "type": "COMPANY", "start": 0, "end": 2},
+        {"text": "이승건", "type": "PERSON", "start": 3, "end": 6}
+      ]
+    },
+    {
+      "id": "test_018",
+      "text": "배달의민족을 운영하는 우아한형제들이 새로운 서비스를 출시했다.",
+      "expected_entities": [
+        {"text": "배달의민족", "type": "COMPANY", "start": 0, "end": 5},
+        {"text": "우아한형제들", "type": "COMPANY", "start": 12, "end": 18}
+      ]
+    },
+    {
+      "id": "test_019",
+      "text": "당근마켓이 중고거래 시장에서 점유율 1위를 기록했다.",
+      "expected_entities": [
+        {"text": "당근마켓", "type": "COMPANY", "start": 0, "end": 4}
+      ]
+    },
+    {
+      "id": "test_020",
+      "text": "넷플릭스와 디즈니플러스가 한국 콘텐츠 투자를 확대한다.",
+      "expected_entities": [
+        {"text": "넷플릭스", "type": "COMPANY", "start": 0, "end": 4},
+        {"text": "디즈니플러스", "type": "COMPANY", "start": 6, "end": 12}
+      ]
+    }
+  ]
+}

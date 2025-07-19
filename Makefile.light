@@ -1,0 +1,135 @@
+# 경량 개발 환경용 Makefile
+# 2GB RAM 시스템용
+
+.PHONY: help
+help: ## 도움말 표시
+	@echo "🚀 RiskRadar 경량 개발 환경 (2GB RAM)"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# ==================== 기본 명령어 ====================
+
+.PHONY: setup
+setup: ## 초기 설정
+	cp .env.example .env
+	@echo "✅ 환경 설정 완료"
+
+.PHONY: clean
+clean: ## 모든 컨테이너 정리
+	docker-compose -f docker-compose.light.yml down -v
+	docker system prune -f
+
+# ==================== 개별 서비스 실행 ====================
+
+.PHONY: redis
+redis: ## Redis만 실행
+	docker-compose -f docker-compose.light.yml up -d redis
+	@echo "✅ Redis 실행됨 (Port: 6379)"
+
+.PHONY: data
+data: redis ## Data Service 실행
+	docker-compose -f docker-compose.light.yml up data-service
+
+.PHONY: ml
+ml: redis ## ML Service 실행
+	docker-compose -f docker-compose.light.yml --profile ml up ml-service
+
+.PHONY: graph
+graph: redis ## Graph Service 실행
+	docker-compose -f docker-compose.light.yml --profile graph up graph-service
+
+.PHONY: api
+api: redis ## API Gateway 실행
+	docker-compose -f docker-compose.light.yml --profile api up api-gateway
+
+.PHONY: ui
+ui: ## Web UI 실행 (로컬 개발 서버 권장)
+	docker-compose -f docker-compose.light.yml --profile ui up web-ui
+
+# ==================== 로컬 개발 (Docker 없이) ====================
+
+.PHONY: local-setup
+local-setup: ## 로컬 개발 환경 설정
+	@echo "📦 Python 가상환경 생성..."
+	cd services/data-service && python3 -m venv venv || true
+	cd services/ml-service && python3 -m venv venv || true
+	cd services/graph-service && python3 -m venv venv || true
+	@echo "📦 Node.js 패키지 설치..."
+	cd services/api-gateway && npm install || true
+	cd services/web-ui && npm install || true
+
+.PHONY: local-data
+local-data: ## Data Service 로컬 실행
+	cd services/data-service && \
+	. venv/bin/activate && \
+	REDIS_URL=redis://localhost:6379 \
+	USE_MOCK_KAFKA=true \
+	python -m src.main
+
+.PHONY: local-ml
+local-ml: ## ML Service 로컬 실행
+	cd services/ml-service && \
+	. venv/bin/activate && \
+	REDIS_URL=redis://localhost:6379 \
+	USE_MOCK_KAFKA=true \
+	python -m src.main
+
+.PHONY: local-api
+local-api: ## API Gateway 로컬 실행
+	cd services/api-gateway && \
+	USE_MOCK_SERVICES=true \
+	npm run dev
+
+.PHONY: local-ui
+local-ui: ## Web UI 로컬 실행
+	cd services/web-ui && \
+	npm run dev
+
+# ==================== 테스트 시나리오 ====================
+
+.PHONY: test-flow
+test-flow: ## 간단한 플로우 테스트
+	@echo "1️⃣ Redis에 Mock 데이터 생성..."
+	docker-compose -f docker-compose.light.yml exec redis redis-cli SET "mock:company:1" '{"name":"Samsung","riskScore":5.0}'
+	@echo "2️⃣ 데이터 확인..."
+	docker-compose -f docker-compose.light.yml exec redis redis-cli GET "mock:company:1"
+
+.PHONY: status
+status: ## 서비스 상태 확인
+	@echo "🔍 실행 중인 컨테이너:"
+	@docker ps --filter "name=riskradar" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+.PHONY: logs
+logs: ## 전체 로그 보기
+	docker-compose -f docker-compose.light.yml logs -f
+
+# ==================== 메모리 모니터링 ====================
+
+.PHONY: memory
+memory: ## 메모리 사용량 확인
+	@echo "💾 시스템 메모리:"
+	@free -h
+	@echo ""
+	@echo "🐳 Docker 메모리 사용량:"
+	@docker stats --no-stream --format "table {{.Container}}\t{{.MemUsage}}\t{{.MemPerc}}"
+
+# ==================== 개발 팁 ====================
+
+.PHONY: tips
+tips: ## 개발 팁 표시
+	@echo "💡 경량 환경 개발 팁:"
+	@echo ""
+	@echo "1. 한번에 1-2개 서비스만 실행하세요"
+	@echo "   make data  # Data Service만"
+	@echo "   make api   # API Gateway만"
+	@echo ""
+	@echo "2. 로컬 개발 추천 (Docker 없이)"
+	@echo "   make local-setup  # 초기 설정"
+	@echo "   make local-ui     # UI 개발"
+	@echo ""
+	@echo "3. 메모리 부족 시"
+	@echo "   make clean        # 컨테이너 정리"
+	@echo "   make memory       # 사용량 확인"
+	@echo ""
+	@echo "4. 실제 Kafka/Neo4j가 필요한 경우"
+	@echo "   클라우드 서비스 사용을 고려하세요"

@@ -1,0 +1,75 @@
+type NewsArticle {
+  id: ID!
+  title: String!
+  content: String!
+  summary: String
+  url: String!
+  source: String!
+  author: String
+  publishedAt: DateTime!
+  crawledAt: DateTime!
+  category: String
+  tags: [String!]!
+  sentiment: Float
+  relevanceScore: Float!
+  mentionedCompanies: [Company!]!
+  detectedRisks: [Risk!]!
+  language: String!
+  imageUrl: String
+}
+
+type NewsUpdate {
+  article: NewsArticle!
+  updateType: NewsUpdateType!
+  timestamp: DateTime!
+}
+
+enum NewsUpdateType {
+  NEW_ARTICLE
+  RISK_DETECTED
+  COMPANY_MENTIONED
+}
+
+input NewsFilter {
+  sources: [String!]
+  categories: [String!]
+  tags: [String!]
+  companyIds: [ID!]
+  dateFrom: DateTime
+  dateTo: DateTime
+  minRelevanceScore: Float
+  sentiment: SentimentRange
+  language: String
+}
+
+input SentimentRange {
+  min: Float!
+  max: Float!
+}
+
+enum NewsSort {
+  PUBLISHED_AT
+  RELEVANCE_SCORE
+  SENTIMENT
+  CRAWLED_AT
+}
+
+extend type Query {
+  newsArticle(id: ID!): NewsArticle
+  newsArticles(
+    filter: NewsFilter
+    sort: NewsSort
+    limit: Int = 50
+    offset: Int = 0
+  ): [NewsArticle!]!
+  latestNews(
+    companyIds: [ID!]
+    limit: Int = 20
+  ): [NewsArticle!]!
+  newsSources: [String!]!
+  newsCategories: [String!]!
+}
+
+extend type Subscription {
+  newsUpdate(filter: NewsFilter): NewsUpdate!
+}
