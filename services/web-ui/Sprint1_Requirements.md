@@ -27,10 +27,10 @@ Web UI의 Sprint 1 목표는 리스크 모니터링을 위한 기본 대시보�
 참조: [인증 컴포넌트](../../docs/trd/phase1/TRD_Product_Squad_P1.md#authentication-components)
 
 ### Week 3: 대시보드 구현
-- [ ] 리스크 요약 카드
-- [ ] 기업 목록 테이블
-- [ ] 리스크 차트 (Recharts)
-- [ ] 필터 및 검색 기능
+- [x] 리스크 요약 카드
+- [x] 기업 목록 테이블
+- [x] 리스크 차트 (Recharts)
+- [x] 필터 및 검색 기능
 
 참조: [주요 컴포넌트](../../docs/trd/phase1/TRD_Product_Squad_P1.md#main-components)
 

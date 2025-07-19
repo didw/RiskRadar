@@ -3,6 +3,57 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-07-19
+
+### Sprint 1 - Week 3: 대시보드 구현
+
+#### 🚀 Added
+- **리스크 요약 카드 강화**
+  - 재사용 가능한 RiskSummaryCard 컴포넌트
+  - 다양한 변형 지원 (default, danger, warning, success)
+  - 트렌드 아이콘 및 변화율 표시
+  - 반응형 그리드 레이아웃
+- **기업 목록 테이블 개선**
+  - EnhancedCompanyList 컴포넌트
+  - 정렬 기능 (이름, 리스크 점수, 변화)
+  - 고급 필터링 (산업별, 리스크 레벨별)
+  - 실시간 검색 기능
+  - 드롭다운 액션 메뉴
+  - 페이지네이션 지원
+- **리스크 차트 구현**
+  - RiskOverviewChart (Line/Area 차트 변형)
+  - RiskDistributionChart (Pie/Bar 차트 변형)
+  - 커스텀 툴팁 구현
+  - 반응형 차트 디자인
+  - Recharts 라이브러리 통합
+- **필터 및 검색 기능**
+  - CompanyFilters 컴포넌트
+  - 다중 필터 선택
+  - 필터 초기화 기능
+  - 활성 필터 표시
+  - EmptyState 컴포넌트
+- **GraphQL 통합**
+  - 쿼리 정의 (GET_RISK_OVERVIEW, GET_COMPANY_RISKS 등)
+  - 뮤테이션 정의 (UPDATE_COMPANY_ALERT, CREATE_RISK_REPORT 등)
+  - TypeScript 타입 정의
+  - GraphQL 버전 컴포넌트 생성
+  - 실시간 업데이트 구독 준비
+
+#### 🔧 Changed
+- 컴포넌트 구조 개선 (더 모듈화된 설계)
+- 타입 안정성 향상
+- UI 일관성 개선
+
+#### 📦 Dependencies
+- recharts (차트 라이브러리)
+- @radix-ui/react-popover
+- react-day-picker
+- date-fns
+
+#### 🧪 Testing
+- 테스트 구조 설정
+- RiskSummaryCard 단위 테스트 작성
+
 ## [0.2.0] - 2025-07-19
 
 ### Sprint 1 - Week 2: 인증 시스템 구현
@@ -86,14 +137,14 @@
 
 ## 다음 릴리스 계획
 
-### v0.2.0 (Sprint 1)
-- [ ] 로그인/로그아웃 기능
-- [ ] 기본 대시보드 레이아웃
-- [ ] 회사 상세 페이지
-- [ ] 기본 차트 구현
-- [ ] 반응형 디자인
+### v0.4.0 (Sprint 1 - Week 4)
+- [ ] 모바일 반응형 레이아웃 최적화
+- [ ] 이미지 최적화 (Next.js Image)
+- [ ] 코드 스플리팅
+- [ ] PWA 설정
+- [ ] 성능 최적화
 
-### v0.3.0 (Sprint 2)
+### v1.0.0 (Sprint 2)
 - [ ] 실시간 업데이트 (WebSocket)
 - [ ] 고급 차트 및 시각화
 - [ ] 알림 시스템

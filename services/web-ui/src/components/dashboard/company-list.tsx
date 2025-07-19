@@ -45,7 +45,7 @@ const companies = [
   },
 ];
 
-const riskLevelConfig = {
+const riskLevelConfig: Record<string, { label: string; className: string }> = {
   low: {
     label: "낮음",
     className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",

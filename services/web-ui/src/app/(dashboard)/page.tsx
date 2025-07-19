@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskOverviewChart } from "@/components/charts/risk-overview-chart";
-import { CompanyList } from "@/components/dashboard/company-list";
+import { RiskDistributionChart } from "@/components/charts/risk-distribution-chart";
+import { RiskMetrics } from "@/components/dashboard/risk-metrics";
+import { EnhancedCompanyList } from "@/components/dashboard/enhanced-company-list";
 
 export default function DashboardPage() {
   return (
@@ -12,66 +14,10 @@ export default function DashboardPage() {
         </p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              전체 모니터링 기업
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              고위험 기업
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-muted-foreground">
-              +2 from yesterday
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              신규 리스크
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">145</div>
-            <p className="text-xs text-muted-foreground">
-              Last 24 hours
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              평균 리스크 점수
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">42.3</div>
-            <p className="text-xs text-muted-foreground">
-              -2.1 from last week
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <RiskMetrics />
       
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        <Card className="col-span-full">
           <CardHeader>
             <CardTitle>리스크 추이</CardTitle>
             <CardDescription>
@@ -85,13 +31,37 @@ export default function DashboardPage() {
         
         <Card>
           <CardHeader>
-            <CardTitle>주요 모니터링 기업</CardTitle>
+            <CardTitle>리스크 분포</CardTitle>
             <CardDescription>
-              실시간 리스크 현황
+              전체 기업의 리스크 레벨 분포
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CompanyList />
+            <RiskDistributionChart />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>산업별 리스크 현황</CardTitle>
+            <CardDescription>
+              산업별 리스크 레벨 분포 비교
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RiskDistributionChart variant="bar" />
+          </CardContent>
+        </Card>
+        
+        <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle>주요 모니터링 기업</CardTitle>
+            <CardDescription>
+              실시간 리스크 현황 및 변화 추이
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <EnhancedCompanyList />
           </CardContent>
         </Card>
       </div>

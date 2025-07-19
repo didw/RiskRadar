@@ -24,13 +24,13 @@ class ApiClient {
     
     // 헤더 설정
     const token = useAuthStore.getState().token;
-    const requestHeaders: HeadersInit = {
+    const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...headers,
+      ...(headers as Record<string, string>),
     };
     
     if (token) {
-      requestHeaders.Authorization = `Bearer ${token}`;
+      requestHeaders['Authorization'] = `Bearer ${token}`;
     }
     
     try {

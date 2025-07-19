@@ -664,9 +664,52 @@ const HeavyComponent = lazy(() => import('./HeavyComponent'));
 - [Sprint Breakdown](../../docs/trd/phase1/Sprint_Breakdown.md) - 전체 Sprint 계획
 
 ### 개발 우선순위
-1. 기본 대시보드 UI
-2. 반응형 레이아웃
+1. 기본 대시보드 UI ✅
+2. 반응형 레이아웃 ✅
 3. 실시간 데이터 업데이트
+
+## 📅 Sprint 1 - Week 3 구현 내역
+
+### 구현된 컴포넌트
+```typescript
+// 리스크 요약 카드
+components/dashboard/risk-summary-card.tsx
+components/dashboard/risk-metrics.tsx
+components/dashboard/risk-metrics-graphql.tsx
+
+// 기업 목록 테이블
+components/dashboard/enhanced-company-list.tsx
+components/dashboard/enhanced-company-list-graphql.tsx
+components/dashboard/company-filters.tsx
+components/dashboard/empty-state.tsx
+components/dashboard/date-range-filter.tsx
+
+// 차트 컴포넌트
+components/charts/risk-overview-chart.tsx
+components/charts/risk-overview-chart-graphql.tsx
+components/charts/risk-distribution-chart.tsx
+
+// UI 컴포넌트
+components/ui/table.tsx
+components/ui/popover.tsx
+components/ui/calendar.tsx
+
+// GraphQL 정의
+graphql/queries/risk.ts
+graphql/queries/company.ts
+graphql/mutations/index.ts
+graphql/types.ts
+
+// 테스트 파일
+components/dashboard/__tests__/risk-summary-card.test.tsx
+```
+
+### 주요 기능
+- ✅ 다양한 변형을 지원하는 리스크 요약 카드
+- ✅ 정렬, 필터, 검색이 가능한 기업 목록 테이블
+- ✅ Line/Area/Pie/Bar 차트 구현
+- ✅ 산업별, 리스크 레벨별 필터링
+- ✅ GraphQL 쿼리 및 타입 정의
 
 ## 📁 프로젝트 문서
 
