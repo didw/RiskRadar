@@ -293,7 +293,6 @@ make performance     # 성능 테스트
 
 ## 📚 문서 체계
 
-<<<<<<< HEAD
 ### 개발 일정
 - **Phase 1** (Week 1-4): Foundation - 기본 인프라 구축 ✅
   - Sprint 0: Walking Skeleton ✅
@@ -304,8 +303,6 @@ make performance     # 성능 테스트
     - Week 4: 통합 테스트 및 문서화 ✅
 - **Phase 2** (Week 5-8): Core Engine - RKG 엔진 개발 📅
 - **Phase 3** (Week 9-12): Product Polish - UI/UX 최적화 📅
-
-## 📚 문서 체계
 
 ### 🎯 핵심 문서  
 - [📋 제품 요구사항 (PRD)](docs/prd/PRD.md) - 비즈니스 목표 및 요구사항

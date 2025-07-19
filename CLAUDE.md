@@ -88,7 +88,6 @@ python scripts/test_e2e_flow.py
 ```bash
 # 전체 개발 환경
 make dev
->>>>>>> 46e9294 (docs: Phase 1 완료 문서화 및 Notion 가이드 추가)
 
 # 개별 서비스 실행
 make dev-data-service    # 데이터 수집
