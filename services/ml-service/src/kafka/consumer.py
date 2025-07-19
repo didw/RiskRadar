@@ -24,6 +24,7 @@ class MLConsumer:
         self.topic = topic
         self.consumer = None
         self.pipeline = None  # Will be set when NLP pipeline is ready
+        self.producer = None  # Will be set when producer is ready
         
     def connect(self):
         """Initialize Kafka consumer connection"""
@@ -47,6 +48,10 @@ class MLConsumer:
     def set_pipeline(self, pipeline):
         """Set NLP pipeline for processing messages"""
         self.pipeline = pipeline
+        
+    def set_producer(self, producer):
+        """Set producer for sending enriched messages"""
+        self.producer = producer
         
     async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Process a single news article through NLP pipeline"""
@@ -96,8 +101,18 @@ class MLConsumer:
                     # Process message
                     enriched = await self.process_message(message.value)
                     
-                    # TODO: Send to enriched-news topic via producer
-                    logger.info(f"Successfully processed message: {message.value.get('id')}")
+                    # Send to enriched-news topic via producer  
+                    logger.info(f"Producer status: {self.producer is not None}")
+                    if self.producer:
+                        try:
+                            logger.info(f"Attempting to send enriched message for: {message.value.get('id')}")
+                            await self.producer.send_enriched(enriched)
+                            logger.info(f"Successfully processed and sent message: {message.value.get('id')}")
+                        except Exception as e:
+                            logger.error(f"Failed to send enriched message: {e}")
+                            logger.info(f"Successfully processed message (send failed): {message.value.get('id')}")
+                    else:
+                        logger.warning(f"No producer available, processed message: {message.value.get('id')}")
                     
                 except Exception as e:
                     logger.error(f"Failed to process message: {e}")

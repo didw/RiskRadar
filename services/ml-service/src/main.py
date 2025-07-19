@@ -69,8 +69,9 @@ async def lifespan(app: FastAPI):
         consumer.connect()
         producer.connect()
         
-        # Set pipeline in consumer
+        # Set pipeline and producer in consumer
         consumer.set_pipeline(pipeline)
+        consumer.set_producer(producer)
         
         # Start consumer task
         consumer_task = asyncio.create_task(consumer.consume_messages())

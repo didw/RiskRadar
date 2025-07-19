@@ -3,6 +3,7 @@ NLP processing pipeline for Korean news articles
 """
 import time
 import logging
+import asyncio
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 
@@ -10,6 +11,8 @@ from .tokenizer import KoreanTokenizer, SimpleTokenizer
 from .normalizer import TextNormalizer
 from ..kafka.schemas import NLPResult, Entity, Sentiment, Keyword
 from ..models.ner import MockNERModel, KLUEBERTNERModel
+from ..models.ner.enhanced_rule_ner import EnhancedRuleBasedNER
+from ..models.ner.koelectra_ner import KoELECTRANER
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +30,11 @@ class ProcessingConfig:
     enable_keywords: bool = True
     
     # NER model settings
-    use_mock_ner: bool = True  # Use mock NER for development
-    ner_model_name: str = "Babelscape/wikineural-multilingual-ner"
-    ner_confidence_threshold: float = 0.5
+    use_mock_ner: bool = False  # Use enhanced rule NER by default
+    use_enhanced_rule_ner: bool = True  # Use enhanced rule-based NER
+    use_koelectra_ner: bool = False  # Use KoELECTRA NER model
+    ner_model_name: str = "enhanced_rule_ner"
+    ner_confidence_threshold: float = 0.8
 
 
 class NLPPipeline:
@@ -51,6 +56,12 @@ class NLPPipeline:
         if self.config.use_mock_ner:
             self.ner_model = MockNERModel()
             logger.info("Using MockNERModel for development")
+        elif self.config.use_enhanced_rule_ner:
+            self.ner_model = EnhancedRuleBasedNER()
+            logger.info("Using Enhanced Rule-based NER model")
+        elif self.config.use_koelectra_ner:
+            self.ner_model = KoELECTRANER()
+            logger.info("Using KoELECTRA NER model (Leo97/KoELECTRA-small-v3-modu-ner)")
         else:
             # Use local KLUE-BERT model
             self.ner_model = KLUEBERTNERModel()
@@ -127,8 +138,14 @@ class NLPPipeline:
         Extract named entities using configured NER model
         """
         try:
-            # Use the configured NER model (MockNERModel or KLUEBERTNERModel)
-            entities = self.ner_model.extract_entities(text)
+            # Use the configured NER model
+            if hasattr(self.ner_model, 'extract_entities'):
+                if asyncio.iscoroutinefunction(self.ner_model.extract_entities):
+                    entities = await self.ner_model.extract_entities(text)
+                else:
+                    entities = self.ner_model.extract_entities(text)
+            else:
+                entities = []
             
             # Apply configuration limits
             entities = entities[:self.config.max_entities]

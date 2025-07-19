@@ -81,18 +81,18 @@ services:
       - riskradar-network
 
   ml-service:
-    image: ml-service:latest
+    build: ./services/ml-service
     container_name: riskradar-ml-service
     ports:
       - "8002:8002"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      USE_MOCK_KAFKA: "false"
       SERVICE_PORT: 8002
       LOG_LEVEL: INFO
     depends_on:
       - kafka
     volumes:
-      - ./services/ml-service:/app
       - ml-models:/app/models
     networks:
       - riskradar-network

@@ -134,7 +134,7 @@ class KoreanNERPostProcessor:
         return sorted(entities, key=lambda x: x.start)
     
     def _merge_adjacent_entities(self, entities: List[Entity], text: str) -> List[Entity]:
-        """인접한 동일 타입 엔티티 병합"""
+        """인접한 동일 타입 엔티티 병합 (스마트 연결사 감지)"""
         if len(entities) <= 1:
             return entities
         
@@ -146,16 +146,30 @@ class KoreanNERPostProcessor:
             if (current_entity.type == next_entity.type and
                 next_entity.start - current_entity.end <= 3):  # 3글자 이내 간격
                 
-                # 원본 텍스트에서 병합된 부분 추출
-                merged_text = text[current_entity.start:next_entity.end].strip()
+                # 중간 텍스트 검사
+                gap_text = text[current_entity.end:next_entity.start]
                 
-                current_entity = Entity(
-                    text=merged_text,
-                    type=current_entity.type,
-                    start=current_entity.start,
-                    end=next_entity.end,
-                    confidence=max(current_entity.confidence, next_entity.confidence)
-                )
+                # 연결사가 있는 경우 병합하지 않음
+                conjunctions = ['와', '과', '이', '가', '및', '그리고', '또한', ',', '·']
+                has_conjunction = any(conj in gap_text for conj in conjunctions)
+                
+                if has_conjunction:
+                    # 연결사가 있으면 개별 엔티티로 유지
+                    logger.debug(f"Skipping merge due to conjunction: '{current_entity.text}' + '{gap_text}' + '{next_entity.text}'")
+                    merged_entities.append(current_entity)
+                    current_entity = next_entity
+                else:
+                    # 연결사가 없으면 병합 (예: "삼성 전자" -> "삼성전자")
+                    merged_text = text[current_entity.start:next_entity.end].strip()
+                    
+                    current_entity = Entity(
+                        text=merged_text,
+                        type=current_entity.type,
+                        start=current_entity.start,
+                        end=next_entity.end,
+                        confidence=max(current_entity.confidence, next_entity.confidence)
+                    )
+                    logger.debug(f"Merged entities: '{merged_text}'")
             else:
                 merged_entities.append(current_entity)
                 current_entity = next_entity
@@ -182,10 +196,10 @@ class KoreanNERPostProcessor:
         """기업명 정규화"""
         text = entity.text
         
-        # 알려진 별칭을 정규명으로 변환
+        # 알려진 별칭을 정규명으로 변환 (정확한 매칭만)
         for alias, canonical in self.company_aliases.items():
-            if alias in text:
-                text = text.replace(alias, canonical)
+            if text == alias:  # 정확히 일치하는 경우만
+                text = canonical
                 break
         
         # 기업명 접미사 추가/정규화

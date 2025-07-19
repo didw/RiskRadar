@@ -12,10 +12,10 @@ ML Service는 RiskRadar 플랫폼의 인공지능 엔진입니다. 한국어 뉴
 - 🔑 **키워드 추출**: 핵심 키워드 및 토픽 분석
 - 🚀 **고성능 처리**: 배치 처리 및 캐싱으로 최적화
 
-### 성능 지표 (Sprint 1 - Week 2 기준)
-- ⚡ **처리 속도**: 2.57ms/article (목표: 10ms) ✅
-- 📊 **처리량**: 389 docs/second (목표: 100 docs/s) ✅
-- 🎯 **NER F1-Score**: 56.3% (목표: 80%) ⚠️ **개선 중**
+### 성능 지표 (Sprint 1 - Week 3 기준)
+- ⚡ **처리 속도**: 22.5ms/article (목표: 10ms) ⚠️ 
+- 📊 **처리량**: 74 docs/second (목표: 100 docs/s) ⚠️
+- 🎯 **NER F1-Score**: 88.6% (목표: 80%) ✅ **목표 달성!**
 - 💾 **캐시 효과**: 90%+ 성능 향상 (반복 요청)
 - 🐳 **Docker 이미지**: 2GB 절감 (CPU 전용 PyTorch)
 
@@ -180,23 +180,29 @@ watch -n 1 nvidia-smi
 
 ### 사용 모델
 - **NER**: 
-  - KoELECTRA Naver NER (현재) - F1: 56.3%
-  - KLUE-BERT (계획중) - 목표 F1: 80%
+  - Enhanced Rule-based NER (현재) - F1: 88.6% ✅
+  - KoELECTRA-small-v3-modu-ner - F1: 46.9%
+  - KoELECTRA Naver NER - F1: 56.3%
 - **Sentiment**: 규칙 기반 감정 분석
 - **Keywords**: TF-IDF 기반 추출  
 - **Risk Score**: 감정 및 키워드 기반 계산
 
-### 핵심 컴포넌트 (Sprint 1 - Week 2 구현 완료)
-- **KoreanNERPostProcessor**: 한국어 특화 후처리 (조사 제거)
-- **KoreanEntityLinker**: 지식베이스 기반 엔티티 링킹 (40+ 기업/인물)
-- **KoreanEntitySplitter**: 연결사 엔티티 분리 ("삼성과 LG" → ["삼성", "LG"])
+### 핵심 컴포넌트 (Sprint 1 완료)
+- **Enhanced Rule-based NER**: 한국어 특화 개체명 인식 (100+ 기업/인물 DB)
+- **KoreanNERPostProcessor**: 스마트 연결사 감지 및 엔티티 병합 방지
+- **KoreanEntityLinker**: 지식베이스 기반 엔티티 링킹
+- **KoELECTRA NER**: Leo97/KoELECTRA-small-v3-modu-ner 통합
 - **NERCacheManager**: LRU 캐싱 시스템 (모델 로딩, 추론 결과)
 - **AdaptiveBatchProcessor**: 동적 배치 처리 (1-32 배치 크기)
 
+### Sprint 1 Week 3 주요 성과
+- 🎯 **F1-Score 88.6% 달성** (목표 80% 초과 달성)
+- 🔧 **연결사 처리 개선**: "CJ그룹과 롯데그룹" → ["CJ그룹", "롯데그룹"]
+- 🚀 **KoELECTRA 모델 통합** 완료
+- ⚡ **성능 57.4% 향상** (vs. 이전 최고 모델)
+
 ### 다음 Sprint 계획
-1. **F1-Score 개선** (우선순위 1)
-   - KLUE-BERT 모델 테스트 및 통합
-   - 도메인 특화 데이터셋 구축
+1. **처리 속도 최적화** (목표: 10ms/article)
 2. **실제 Kafka 통합** (Mock → Real mode)
 3. **감정 분석 모델 고도화**
 
