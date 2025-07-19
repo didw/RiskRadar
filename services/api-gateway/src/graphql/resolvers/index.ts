@@ -1,10 +1,10 @@
-import { companyResolvers } from './company';
-import { riskResolvers } from './risk';
-import { userResolvers } from './user';
-import { newsResolvers } from './news';
-import { Loaders } from '../dataloaders';
-import { graphServiceClient } from '../../services/graph.client';
-import { mlServiceClient } from '../../services/ml.client';
+import { companyResolvers } from './company.js';
+import { riskResolvers } from './risk.js';
+import { userResolvers } from './user.js';
+import { newsResolvers } from './news.js';
+import { Loaders } from '../dataloaders/index.js';
+import { graphServiceClient } from '../../services/graph.client.js';
+import { mlServiceClient } from '../../services/ml.client.js';
 
 export interface Context {
   user?: {

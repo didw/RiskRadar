@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql';
+import { GraphQLError, GraphQLFormattedError } from 'graphql';
 
 export enum ErrorCode {
   // Authentication & Authorization
@@ -93,14 +93,14 @@ export class RateLimitError extends CustomError {
 }
 
 // Error formatting for production
-export const formatError = (error: GraphQLError) => {
+export const formatError = (formattedError: GraphQLFormattedError, error: unknown): GraphQLFormattedError => {
   // Log all errors for monitoring
   console.error('GraphQL Error:', {
-    message: error.message,
-    code: error.extensions?.code,
-    path: error.path,
-    timestamp: error.extensions?.timestamp,
-    ...(process.env.NODE_ENV !== 'production' && { stack: error.stack }),
+    message: formattedError.message,
+    code: formattedError.extensions?.code,
+    path: formattedError.path,
+    timestamp: formattedError.extensions?.timestamp,
+    ...(process.env.NODE_ENV !== 'production' && error instanceof Error && { stack: error.stack }),
   });
 
   // In production, hide internal error details
@@ -116,16 +116,25 @@ export const formatError = (error: GraphQLError) => {
       ErrorCode.RATE_LIMIT_EXCEEDED,
     ];
 
-    const code = error.extensions?.code as ErrorCode;
+    const code = formattedError.extensions?.code as ErrorCode;
     if (!safeCodes.includes(code)) {
-      return new CustomError(
-        'An internal error occurred',
-        ErrorCode.INTERNAL_ERROR
-      );
+      return {
+        message: 'An internal error occurred',
+        extensions: {
+          code: ErrorCode.INTERNAL_ERROR,
+          timestamp: new Date().toISOString()
+        }
+      };
     }
   }
 
-  return error;
+  return {
+    ...formattedError,
+    extensions: {
+      ...formattedError.extensions,
+      timestamp: formattedError.extensions?.timestamp || new Date().toISOString()
+    }
+  };
 };
 
 // Utility functions for error handling

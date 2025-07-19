@@ -47,25 +47,14 @@ class NLPPipeline:
         else:
             self.tokenizer = KoreanTokenizer(backend=self.config.tokenizer_backend)
             
-        # Initialize NER model based on global settings
-        from ..config import get_settings
-        settings = get_settings()
-        
-        if settings.use_mock_ner or self.config.use_mock_ner:
+        # Initialize NER model based on configuration
+        if self.config.use_mock_ner:
             self.ner_model = MockNERModel()
             logger.info("Using MockNERModel for development")
         else:
-            # Check if API token is available
-            api_token = settings.huggingface_api_token
-            if not api_token:
-                logger.warning("No Hugging Face API token provided. Falling back to MockNERModel")
-                self.ner_model = MockNERModel()
-            else:
-                self.ner_model = KLUEBERTNERModel(
-                    model_name=settings.ner_model_name,
-                    api_token=api_token
-                )
-                logger.info("Using Multilingual NER model via Hugging Face API")
+            # Use local KLUE-BERT model
+            self.ner_model = KLUEBERTNERModel()
+            logger.info("Using KLUE-BERT NER model (local)")
             
         # Sentiment model placeholder
         self.sentiment_model = None

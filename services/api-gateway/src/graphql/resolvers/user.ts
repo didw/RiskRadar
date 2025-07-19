@@ -1,7 +1,7 @@
-import { Context } from './index';
+import { Context } from './index.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { config } from '../../config';
+import { config } from '../../config/index.js';
 
 const mockUsers = [
   {

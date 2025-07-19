@@ -1,7 +1,7 @@
 import DataLoader from 'dataloader';
-import { graphServiceClient } from '../../services/graph.client';
-import { mlServiceClient } from '../../services/ml.client';
-import logger from '../../utils/logger';
+import { graphServiceClient } from '../../services/graph.client.js';
+import { mlServiceClient } from '../../services/ml.client.js';
+import logger from '../../utils/logger.js';
 
 // Company DataLoader
 export const createCompanyLoader = () => {

@@ -29,8 +29,23 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Graph Service...")
     
-    # Neo4j 연결은 첫 사용 시 자동으로 시도됨
-    logger.info("Neo4j connection will be established on first use")
+    # Neo4j 연결 확인 (재시도 로직 포함)
+    import time
+    max_retries = 30
+    retry_interval = 2
+    
+    for attempt in range(max_retries):
+        try:
+            neo4j_driver.driver.verify_connectivity()
+            logger.info("Connected to Neo4j")
+            break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"Neo4j connection attempt {attempt + 1}/{max_retries} failed: {e}. Retrying in {retry_interval}s...")
+                time.sleep(retry_interval)
+            else:
+                logger.error(f"Failed to connect to Neo4j after {max_retries} attempts: {e}")
+                raise e
     
     # Kafka Consumer 시작
     kafka_consumer.start()
@@ -197,6 +212,9 @@ async def analyze_network_risk(request: NetworkRiskRequest):
             analysis_timestamp=datetime.now()
         )
         
+    except HTTPException:
+        # HTTPException은 그대로 re-raise
+        raise
     except Exception as e:
         logger.error(f"Error analyzing network risk: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -205,6 +223,10 @@ async def analyze_network_risk(request: NetworkRiskRequest):
 async def get_company_details(company_id: str):
     """기업 상세 정보 조회"""
     try:
+        # 입력 검증
+        if not company_id or not company_id.strip():
+            raise HTTPException(status_code=400, detail="Company ID is required")
+        
         query = """
         MATCH (c:Company {id: $company_id})
         OPTIONAL MATCH (c)-[r:MENTIONED_IN]->(n:NewsArticle)
@@ -216,16 +238,26 @@ async def get_company_details(company_id: str):
                count(e) as event_count
         """
         
+        logger.info(f"Querying company details for ID: {company_id}")
         results = neo4j_driver.execute_read(query, company_id=company_id)
         
         if not results:
-            raise HTTPException(status_code=404, detail="Company not found")
+            logger.info(f"Company not found: {company_id}")
+            raise HTTPException(status_code=404, detail=f"Company with ID '{company_id}' not found")
         
+        logger.info(f"Successfully retrieved company details for ID: {company_id}")
         return results[0]
         
+    except HTTPException:
+        # HTTPException은 그대로 re-raise (404, 400 등)
+        raise
     except Exception as e:
-        logger.error(f"Error getting company details: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error getting company details for ID '{company_id}': {e}")
+        # Neo4j 연결 관련 오류인지 확인
+        if "connection" in str(e).lower() or "timeout" in str(e).lower():
+            raise HTTPException(status_code=503, detail="Database connection unavailable")
+        else:
+            raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/api/v1/graph/cache/stats")
 async def get_cache_stats():

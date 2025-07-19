@@ -1,7 +1,7 @@
 import { GraphQLClient } from 'graphql-request';
 import { gql } from 'graphql-tag';
-import { config } from '../config';
-import logger from '../utils/logger';
+import { config } from '../config/index.js';
+import logger from '../utils/logger.js';
 
 interface Company {
   id: string;

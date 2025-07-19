@@ -35,14 +35,14 @@ class Settings(BaseSettings):
     enable_gpu: bool = False
     
     # Development settings
-    use_mock_kafka: bool = True
+    use_mock_kafka: bool = False  # 실제 Kafka 사용
     use_simple_tokenizer: bool = False
     use_mock_ner: bool = True  # Use mock NER model by default
     mock_data_path: str = "mock-data/raw-news.json"
     
     # NER model settings
-    ner_model_name: str = "Babelscape/wikineural-multilingual-ner"
-    huggingface_api_token: Optional[str] = None  # Set via environment variable
+    ner_model_name: str = "klue/bert-base"
+    ner_model_path: str = "/app/models/klue-bert-ner"
     
     # Logging
     log_level: str = "INFO"

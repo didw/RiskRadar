@@ -8,12 +8,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { json } from 'body-parser';
 
-import { config } from './config';
-import logger from './utils/logger';
-import { typeDefs } from './graphql/schema';
-import { resolvers } from './graphql/resolvers';
-import { authMiddleware } from './middleware/auth';
-import { errorHandler } from './middleware/error';
+import { config } from './config/index.js';
+import logger from './utils/logger.js';
+import { typeDefs } from './graphql/schema/index.js';
+import { resolvers } from './graphql/resolvers/index.js';
+import { authMiddleware } from './middleware/auth.js';
+import { errorHandler } from './middleware/error.js';
+import { formatError } from './utils/errors.js';
 
 async function startServer() {
   const app = express();
@@ -51,10 +52,7 @@ async function startServer() {
       ApolloServerPluginDrainHttpServer({ httpServer }),
       ApolloServerPluginLandingPageLocalDefault({ embed: true }),
     ],
-    formatError: (err) => {
-      const { formatError } = require('./utils/errors');
-      return formatError(err);
-    },
+    formatError,
   });
 
   await server.start();
