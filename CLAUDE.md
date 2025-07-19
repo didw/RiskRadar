@@ -66,6 +66,7 @@ RiskRadar/
 
 ## 빠른 시작
 
+### 개발 환경
 ```bash
 # 환경 설정
 make setup
@@ -74,7 +75,7 @@ make setup
 docker-compose up -d
 
 # 초기 데이터 시딩
-python scripts/seed_neo4j.py
+NEO4J_PASSWORD=riskradar123 python scripts/seed_neo4j.py
 
 # 통합 테스트 실행
 python scripts/test_e2e_flow.py
@@ -84,6 +85,19 @@ make dev-data-service
 
 # 테스트 실행
 make test
+```
+
+### 프로덕션 배포
+```bash
+# 프로덕션 배포 스크립트 실행
+chmod +x ./scripts/deploy_production.sh
+./scripts/deploy_production.sh
+
+# 또는 Docker Compose로 직접 배포
+docker-compose -f docker-compose.prod.yml up -d
+
+# 초기 데이터 시딩
+NEO4J_PASSWORD=riskradar123 python scripts/seed_neo4j.py
 ```
 
 ## 주요 문서 링크
@@ -101,6 +115,11 @@ make test
 - [Sprint 0 Quick Start](./docs/trd/phase1/Sprint_0_Quick_Start.md) - 빠른 시작
 - [Integration Strategy](./docs/trd/phase1/Integration_Strategy.md) - 통합 전략
 - [Sprint 1 Summary](./docs/SPRINT1_SUMMARY.md) - Sprint 1 완료 보고서
+
+### Phase 2 & 3 계획
+- [Phase 2 Overview](./docs/prd/PRD_Phase2_Overview.md) - Phase 2 제품 요구사항
+- [Phase 3 Overview](./docs/prd/PRD_Phase3_Overview.md) - Phase 3 제품 요구사항
+- [Sprint Plan](./docs/trd/SPRINT_PLAN_PHASE2_3.md) - Phase 2-3 Sprint 계획
 
 ## 개발 워크플로우
 
@@ -132,25 +151,53 @@ kafka-console-consumer --topic {topic-name}
 - **Integration Sync**: 매일 14:00
 - **Slack**: #riskradar-dev
 
-## Sprint 1 완료 현황
+## 환경별 설정
 
-### 주요 성과
-- ✅ 마이크로서비스 아키텍처 구축 완료
-- ✅ 종단간 데이터 파이프라인 구현 (Crawler → Kafka → ML → Graph)
-- ✅ 한국어 NLP 처리 파이프라인 구현
-- ✅ GraphQL API 및 WebSocket 실시간 업데이트
-- ✅ 통합 테스트 프레임워크 구축
+### 개발 환경
+- Docker Compose: `docker-compose.yml`
+- 포트: 각 서비스별 기본 포트 사용
+- 데이터베이스: 로컬 컨테이너
 
-### 알려진 이슈
-- Web UI 모듈 로딩 오류 (Sprint 2에서 해결 예정)
-- Graph Service 엔티티 캐시 동기화 문제
-- 성능 최적화 필요 (Sprint 2로 연기)
+### 프로덕션 환경
+- Docker Compose: `docker-compose.prod.yml`
+- 포트: Nginx를 통한 통합 접근 (80/443)
+- 모니터링: Prometheus + Grafana
+- 로깅: ELK Stack (선택사항)
 
-### 개발 팁
-1. **서비스 연동 테스트**: `python scripts/test_e2e_flow.py` 실행
-2. **Kafka 메시지 확인**: `docker exec riskradar-kafka kafka-console-consumer --topic enriched-news --from-beginning`
-3. **Neo4j 데이터 확인**: http://localhost:7474 에서 브라우저 접속
-4. **로그 실시간 확인**: `docker-compose logs -f [service-name]`
+## 서비스별 포트
+
+| 서비스 | 개발 포트 | 프로덕션 포트 | 헬스체크 |
+|--------|-----------|---------------|----------|
+| Web UI | 3000 | 80 (Nginx) | /api/health |
+| API Gateway | 8004 | 8004 | /health |
+| Data Service | 8001 | 8001 | /health |
+| ML Service | 8082 | 8082 | /api/v1/health |
+| Graph Service | 8003 | 8003 | /health |
+| Neo4j | 7474/7687 | 7474/7687 | - |
+| Kafka | 9092 | 9092 | - |
+
+## 개발 팁
+
+### 서비스 디버깅
+```bash
+# 서비스 연동 테스트
+python scripts/test_e2e_flow.py
+
+# Kafka 메시지 확인
+docker exec riskradar-kafka kafka-console-consumer --topic enriched-news --from-beginning
+
+# Neo4j 데이터 확인
+# http://localhost:7474 (neo4j/riskradar123)
+
+# 로그 실시간 확인
+docker-compose logs -f [service-name]
+```
+
+### 트러블슈팅
+1. **포트 충돌**: 기존 서비스 중지 후 재시작
+2. **Neo4j 인증 실패**: `NEO4J_PASSWORD=riskradar123` 환경 변수 설정
+3. **ML Service 포트**: 8082 사용 (8002 아님)
+4. **GraphQL 스키마 충돌**: 타입명 중복 확인
 
 ---
 *최종 업데이트: 2025-07-19*
